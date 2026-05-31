@@ -3,6 +3,7 @@
 import {
   LayoutDashboard,
   Briefcase,
+  Columns3,
   Building2,
   CalendarDays,
   StickyNote,
@@ -16,6 +17,7 @@ import { clearTokens } from "@/lib/auth";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Kanban", href: "/kanban", icon: Columns3 },
   { label: "Applications", href: "/applications", icon: Briefcase },
   { label: "Companies", href: "/companies", icon: Building2 },
   { label: "Interviews", href: "/interviews", icon: CalendarDays },
