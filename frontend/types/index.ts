@@ -1,8 +1,11 @@
+export type UserRole = 'DEVELOPER' | 'RECRUITER';
+
 export interface User {
   id: number;
   email: string;
   first_name: string;
   last_name: string;
+  role: UserRole;
   is_active: boolean;
   date_joined: string;
 }
@@ -123,6 +126,102 @@ export interface DashboardStats {
   total_notes: number;
   upcoming_interviews: UpcomingInterview[];
   recent_applications: RecentApplication[];
+}
+
+export type JobApplicationStatus = 'APPLIED' | 'REVIEWING' | 'INTERVIEW' | 'REJECTED' | 'ACCEPTED';
+
+export interface JobApplication {
+  id: number;
+  developer: number;
+  developer_name: string;
+  developer_email: string;
+  job_post: number;
+  job_title: string;
+  company_name: string;
+  recruiter_name: string;
+  status: JobApplicationStatus;
+  cover_letter: string;
+  interview_date: string | null;
+  interview_link: string;
+  interview_note: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type RescheduleStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+
+export interface InterviewRescheduleRequest {
+  id: number;
+  job_application: number;
+  job_title: string;
+  company_name: string;
+  developer_name: string;
+  developer_email: string;
+  requested_by: number;
+  reason: string;
+  available_slots: string;
+  status: RescheduleStatus;
+  recruiter_response: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface JobPost {
+  id: number;
+  company: number;
+  company_name: string;
+  recruiter_name: string;
+  title: string;
+  description: string;
+  requirements: string;
+  location: string;
+  work_type: string;
+  salary_range: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DeveloperProfile {
+  id: number;
+  title: string;
+  bio: string;
+  skills: string;
+  github_url: string;
+  linkedin_url: string;
+  portfolio_url: string;
+  location: string;
+  years_of_experience: number | null;
+  is_open_to_work: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RecruiterProfile {
+  id: number;
+  company_name: string;
+  company_website: string;
+  company_industry: string;
+  company_location: string;
+  position_title: string;
+  bio: string;
+  linkedin_url: string;
+  is_hiring: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FeedPost {
+  id: number;
+  author: number;
+  author_name: string;
+  author_email: string;
+  author_role: "DEVELOPER" | "RECRUITER" | string;
+  content: string;
+  image: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface EmailLog {

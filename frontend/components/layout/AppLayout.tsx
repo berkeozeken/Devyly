@@ -1,50 +1,76 @@
 "use client";
 
 import {
-  LayoutDashboard,
   Briefcase,
-  Columns3,
   Building2,
-  CalendarDays,
-  StickyNote,
+  UserCircle,
+  Search,
+  FileText,
+  Inbox,
   LogOut,
+  Rss,
 } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { clearTokens } from "@/lib/auth";
+import { getUser, clearTokens } from "@/lib/auth";
+import type { UserRole } from "@/types";
 
-const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Kanban", href: "/kanban", icon: Columns3 },
-  { label: "Applications", href: "/applications", icon: Briefcase },
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+}
+
+const developerNavItems: NavItem[] = [
+  { label: "Feed", href: "/feed", icon: Rss },
+  { label: "Jobs", href: "/jobs", icon: Search },
+  { label: "My Applications", href: "/my-applications", icon: FileText },
+  { label: "Profile", href: "/profile", icon: UserCircle },
+];
+
+const recruiterNavItems: NavItem[] = [
+  { label: "Feed", href: "/feed", icon: Rss },
+  { label: "My Jobs", href: "/my-jobs", icon: Briefcase },
+  { label: "Received Applications", href: "/received-applications", icon: Inbox },
   { label: "Companies", href: "/companies", icon: Building2 },
-  { label: "Interviews", href: "/interviews", icon: CalendarDays },
-  { label: "Notes", href: "/notes", icon: StickyNote },
+  { label: "Profile", href: "/profile", icon: UserCircle },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+
+  useEffect(() => {
+    const user = getUser();
+    if (user) setUserRole(user.role);
+  }, []);
+
+  const visibleItems =
+    userRole === "DEVELOPER"
+      ? developerNavItems
+      : userRole === "RECRUITER"
+      ? recruiterNavItems
+      : [];
 
   const handleLogout = () => {
     clearTokens();
-    router.push("/login");
+    router.push("/feed");
   };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
       <aside className="w-56 shrink-0 bg-white border-r flex flex-col">
-        {/* Logo */}
         <div className="px-6 py-5 border-b">
           <span className="text-lg font-bold text-gray-800">Devyly</span>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map(({ label, href, icon: Icon }) => {
+          {visibleItems.map(({ label, href, icon: Icon }) => {
             const active = pathname === href;
             return (
               <Link
@@ -63,7 +89,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* Logout */}
         <div className="px-3 py-4 border-t">
           <Button
             variant="ghost"
@@ -77,7 +102,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Main */}
       <main className="flex-1 overflow-y-auto">{children}</main>
     </div>
   );

@@ -1,13 +1,20 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import api from "@/lib/api";
-import { clearTokens, getAccessToken } from "@/lib/auth";
+import { clearTokens, getAccessToken, getUser } from "@/lib/auth";
+import type { UserRole } from "@/types";
 
-export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
+interface Props {
+  children: React.ReactNode;
+  allowedRoles?: UserRole[];
+}
+
+export default function ProtectedRoute({ children, allowedRoles }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const [verified, setVerified] = useState(false);
 
   useEffect(() => {
@@ -15,21 +22,30 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       const token = getAccessToken();
 
       if (!token) {
-        router.replace("/login");
+        router.replace(`/login?next=${encodeURIComponent(pathname)}`);
         return;
       }
 
       try {
         await api.get("/auth/me/");
+
+        if (allowedRoles) {
+          const user = getUser();
+          if (!user || !allowedRoles.includes(user.role)) {
+            router.replace("/feed");
+            return;
+          }
+        }
+
         setVerified(true);
       } catch {
         clearTokens();
-        router.replace("/login");
+        router.replace(`/login?next=${encodeURIComponent(pathname)}`);
       }
     };
 
     check();
-  }, [router]);
+  }, [router, pathname, allowedRoles]);
 
   if (!verified) {
     return (

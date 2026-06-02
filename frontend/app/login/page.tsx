@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -19,8 +19,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import api from "@/lib/api";
-import { setTokens } from "@/lib/auth";
-import type { AuthTokens } from "@/types";
+import { setTokens, setUser } from "@/lib/auth";
+import type { AuthTokens, UserRole } from "@/types";
+
+const DEVELOPER_ROUTES = ["/my-applications"];
+const RECRUITER_ROUTES = ["/my-jobs", "/received-applications", "/companies"];
+
+function isRouteAccessible(path: string, role: UserRole): boolean {
+  if (DEVELOPER_ROUTES.some((r) => path.startsWith(r))) return role === "DEVELOPER";
+  if (RECRUITER_ROUTES.some((r) => path.startsWith(r))) return role === "RECRUITER";
+  return true;
+}
 
 const loginSchema = z.object({
   email: z.string().email("Geçerli bir email adresi girin"),
@@ -31,7 +40,9 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const {
     register,
@@ -43,9 +54,18 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await api.post<AuthTokens>("/auth/login/", data);
-      setTokens(res.data.access, res.data.refresh);
+      setTokens(res.data.access, res.data.refresh, rememberMe);
+      setUser(res.data.user, rememberMe);
       toast.success("Giriş başarılı!");
-      router.push("/dashboard");
+      const next = searchParams?.get("next") || "";
+      const role = res.data.user.role;
+      if (next && isRouteAccessible(next, role)) {
+        router.push(next);
+      } else if (next) {
+        router.push("/feed");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { detail?: string; non_field_errors?: string[] } } })
@@ -92,6 +112,19 @@ export default function LoginPage() {
               {errors.password && (
                 <p className="text-sm text-red-500">{errors.password.message}</p>
               )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                id="remember"
+                type="checkbox"
+                className="h-4 w-4 rounded border-gray-300 accent-blue-600 cursor-pointer"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              <Label htmlFor="remember" className="text-sm font-normal text-gray-600 cursor-pointer">
+                Beni hatırla
+              </Label>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
