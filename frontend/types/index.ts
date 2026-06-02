@@ -6,6 +6,8 @@ export interface User {
   first_name: string;
   last_name: string;
   role: UserRole;
+  profile_photo: string | null;
+  gender: string | null;
   is_active: boolean;
   date_joined: string;
 }
@@ -217,6 +219,8 @@ export interface FeedPost {
   author_name: string;
   author_email: string;
   author_role: "DEVELOPER" | "RECRUITER" | string;
+  author_profile_photo: string | null;
+  author_gender: string | null;
   content: string;
   image: string | null;
   is_active: boolean;

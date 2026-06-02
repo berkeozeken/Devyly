@@ -37,7 +37,7 @@ class FeedPostViewSet(ModelViewSet):
         return [IsAuthenticated(), IsOwner()]
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        serializer.save(author=self.request.user, is_active=True)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

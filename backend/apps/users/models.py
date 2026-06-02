@@ -23,10 +23,20 @@ class User(AbstractBaseUser, PermissionsMixin):
         DEVELOPER = 'DEVELOPER', 'Developer'
         RECRUITER = 'RECRUITER', 'Recruiter'
 
+    class Gender(models.TextChoices):
+        MALE = 'MALE', 'Male'
+        FEMALE = 'FEMALE', 'Female'
+        OTHER = 'OTHER', 'Other'
+        PREFER_NOT_TO_SAY = 'PREFER_NOT_TO_SAY', 'Prefer not to say'
+
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.DEVELOPER)
+    profile_photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True)
+    gender = models.CharField(
+        max_length=30, choices=Gender.choices, null=True, blank=True
+    )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)

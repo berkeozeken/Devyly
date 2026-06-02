@@ -18,6 +18,31 @@ import api from "@/lib/api";
 import { getUser, isAuthenticated } from "@/lib/auth";
 import type { FeedPost, User } from "@/types";
 
+function PostAvatar({ name, photo, gender }: { name: string; photo?: string | null; gender?: string | null }) {
+  if (photo) {
+    return (
+      <img
+        src={photo}
+        alt={name}
+        className="w-8 h-8 rounded-full object-cover shrink-0"
+      />
+    );
+  }
+  const initial = name.charAt(0).toUpperCase() || "?";
+  const normalizedGender = gender?.toUpperCase();
+  const bgClass =
+    normalizedGender === "MALE"
+      ? "bg-blue-200 text-blue-800"
+      : normalizedGender === "FEMALE"
+      ? "bg-pink-200 text-pink-800"
+      : "bg-gray-200 text-gray-600";
+  return (
+    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${bgClass}`}>
+      {initial}
+    </div>
+  );
+}
+
 const ROLE_BADGE: Record<string, string> = {
   DEVELOPER: "bg-blue-100 text-blue-600",
   RECRUITER: "bg-purple-100 text-purple-600",
@@ -304,6 +329,11 @@ export default function FeedPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
+                    <PostAvatar
+                      name={post.author_name}
+                      photo={post.author_profile_photo}
+                      gender={post.author_gender}
+                    />
                     <span className="text-sm font-medium text-gray-800 truncate">
                       {post.author_name}
                     </span>

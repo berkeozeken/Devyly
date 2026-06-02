@@ -12,6 +12,8 @@ class FeedPostSerializer(serializers.ModelSerializer):
     author_name = serializers.SerializerMethodField(read_only=True)
     author_email = serializers.EmailField(source='author.email', read_only=True)
     author_role = serializers.CharField(source='author.role', read_only=True)
+    author_profile_photo = serializers.SerializerMethodField(read_only=True)
+    author_gender = serializers.SerializerMethodField(read_only=True)
     remove_image = serializers.BooleanField(write_only=True, required=False)
 
     class Meta:
@@ -22,6 +24,8 @@ class FeedPostSerializer(serializers.ModelSerializer):
             'author_name',
             'author_email',
             'author_role',
+            'author_profile_photo',
+            'author_gender',
             'content',
             'image',
             'remove_image',
@@ -35,6 +39,9 @@ class FeedPostSerializer(serializers.ModelSerializer):
             'author_name',
             'author_email',
             'author_role',
+            'author_profile_photo',
+            'author_gender',
+            'is_active',
             'created_at',
             'updated_at',
         )
@@ -42,6 +49,17 @@ class FeedPostSerializer(serializers.ModelSerializer):
     def get_author_name(self, obj):
         full_name = obj.author.get_full_name()
         return full_name if full_name else obj.author.email
+
+    def get_author_profile_photo(self, obj):
+        if not obj.author.profile_photo:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.author.profile_photo.url)
+        return obj.author.profile_photo.url
+
+    def get_author_gender(self, obj):
+        return obj.author.gender or None
 
     def validate_image(self, value):
         if not value:
