@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -297,7 +298,12 @@ function ReceivedApplicationsContent() {
                     {/* Candidate info + status */}
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="flex-1 min-w-0 space-y-1">
-                        <p className="font-medium text-gray-800">{app.developer_name}</p>
+                        <Link
+                          href={`/users/${app.developer}`}
+                          className="font-medium text-gray-800 hover:text-blue-600 hover:underline"
+                        >
+                          {app.developer_name}
+                        </Link>
                         <p className="text-xs text-gray-400">{app.developer_email}</p>
                         <p className="text-sm text-gray-600">{app.job_title} — {app.company_name}</p>
                         {app.cover_letter && (

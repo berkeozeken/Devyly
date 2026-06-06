@@ -24,16 +24,19 @@ export const getRefreshToken = (): string | null => {
   return localStorage.getItem(REFRESH_KEY) || sessionStorage.getItem(REFRESH_KEY);
 };
 
+const LEGACY_KEYS = [
+  "token", "access", "refresh",
+  "auth_token",
+  "devyly_user", "devyly_access_token", "devyly_refresh_token",
+];
+
 export const clearTokens = () => {
   if (typeof window === "undefined") return;
   for (const s of [localStorage, sessionStorage]) {
     s.removeItem(ACCESS_KEY);
     s.removeItem(REFRESH_KEY);
     s.removeItem(USER_KEY);
-    // legacy keys from older auth attempts
-    s.removeItem("token");
-    s.removeItem("access");
-    s.removeItem("refresh");
+    for (const k of LEGACY_KEYS) s.removeItem(k);
   }
 };
 
@@ -49,6 +52,7 @@ export const getUser = (): User | null => {
   try {
     return JSON.parse(data) as User;
   } catch {
+    clearTokens();
     return null;
   }
 };

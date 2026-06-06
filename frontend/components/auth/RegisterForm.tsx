@@ -74,7 +74,7 @@ export default function RegisterForm({ role }: Props) {
       setTokens(res.data.access, res.data.refresh);
       setUser(res.data.user);
       toast.success("Kayıt başarılı! Hoş geldiniz.");
-      router.push("/dashboard");
+      router.push("/feed");
     } catch (err: unknown) {
       const errorData = (
         err as { response?: { data?: Record<string, string | string[]> } }

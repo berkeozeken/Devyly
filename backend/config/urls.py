@@ -7,6 +7,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('apps.users.urls')),
+    path('api/users/', include('apps.users.public_urls')),
     path('api/companies/', include('apps.companies.urls')),
     path('api/applications/', include('apps.applications.urls')),
     path('api/interviews/', include('apps.interviews.urls')),
@@ -19,6 +20,7 @@ urlpatterns = [
     path('api/job-applications/', include('apps.job_applications.urls')),
     path('api/interview-reschedule-requests/', include('apps.job_applications.reschedule_urls')),
     path('api/feed-posts/', include('apps.feed_posts.urls')),
+    path('api/notifications/', include('apps.notifications.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 ]

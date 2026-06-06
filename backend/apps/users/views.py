@@ -18,6 +18,8 @@ from .serializers import (
     LoginSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
+    PublicDeveloperProfileSerializer,
+    PublicRecruiterProfileSerializer,
     RegisterSerializer,
     UserProfileUpdateSerializer,
     UserSerializer,
@@ -184,3 +186,35 @@ class PasswordResetConfirmView(APIView):
 def _get_frontend_url():
     from django.conf import settings
     return getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+
+
+class PublicUserProfileView(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk, is_active=True)
+        except User.DoesNotExist:
+            return Response({'detail': 'Kullanıcı bulunamadı.'}, status=status.HTTP_404_NOT_FOUND)
+
+        user_data = UserSerializer(user, context={'request': request}).data
+
+        developer_profile = None
+        recruiter_profile = None
+
+        if user.role == User.Role.DEVELOPER:
+            try:
+                developer_profile = PublicDeveloperProfileSerializer(user.developer_profile).data
+            except Exception:
+                pass
+        elif user.role == User.Role.RECRUITER:
+            try:
+                recruiter_profile = PublicRecruiterProfileSerializer(user.recruiter_profile).data
+            except Exception:
+                pass
+
+        return Response({
+            'user': user_data,
+            'developer_profile': developer_profile,
+            'recruiter_profile': recruiter_profile,
+        })

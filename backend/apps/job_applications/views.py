@@ -4,6 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.notifications.models import Notification
+from apps.notifications.services import create_notification
 from apps.users.models import User
 
 from .models import InterviewRescheduleRequest, JobApplication
@@ -77,9 +79,44 @@ class JobApplicationDetailView(APIView):
         if err:
             return err
 
+        old_status = app.status
+        old_interview_date = app.interview_date
+        old_interview_link = app.interview_link
+
         serializer = StatusUpdateSerializer(app, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        # Status change notification
+        if old_status != app.status:
+            create_notification(
+                recipient=app.developer,
+                actor=request.user,
+                notification_type=Notification.Type.APPLICATION_STATUS_CHANGED,
+                title="Başvuru durumunuz güncellendi",
+                message=f"{app.job_post.title} başvurunuzun durumu {app.status} olarak güncellendi.",
+                link="/my-applications",
+            )
+
+        # Interview info notification
+        interview_changed = (
+            old_interview_date != app.interview_date
+            or old_interview_link != app.interview_link
+        )
+        if interview_changed and app.interview_date:
+            is_new = not old_interview_date and bool(app.interview_date)
+            create_notification(
+                recipient=app.developer,
+                actor=request.user,
+                notification_type=(
+                    Notification.Type.INTERVIEW_SCHEDULED if is_new
+                    else Notification.Type.INTERVIEW_UPDATED
+                ),
+                title="Mülakat bilgileri güncellendi",
+                message=f"{app.job_post.title} başvurunuz için mülakat bilgileri güncellendi.",
+                link="/my-applications",
+            )
+
         return Response(JobApplicationSerializer(app).data)
 
 
@@ -118,6 +155,16 @@ class CreateRescheduleRequestView(APIView):
             requested_by=request.user,
             **serializer.validated_data,
         )
+
+        create_notification(
+            recipient=app.job_post.recruiter,
+            actor=request.user,
+            notification_type=Notification.Type.RESCHEDULE_REQUESTED,
+            title="Tarih değişikliği talebi",
+            message=f"{request.user.get_full_name()}, {app.job_post.title} mülakatı için tarih değişikliği talep etti.",
+            link="/received-applications",
+        )
+
         return Response(InterviewRescheduleRequestSerializer(req).data, status=status.HTTP_201_CREATED)
 
 
@@ -153,7 +200,9 @@ class RescheduleRequestDetailView(APIView):
     def _get_request(self, pk, user):
         try:
             req = InterviewRescheduleRequest.objects.select_related(
-                'job_application', 'job_application__job_post', 'job_application__job_post__company', 'requested_by'
+                'job_application', 'job_application__job_post',
+                'job_application__job_post__company',
+                'job_application__developer', 'requested_by',
             ).get(pk=pk)
         except InterviewRescheduleRequest.DoesNotExist:
             return None, Response({'detail': 'Talep bulunamadı.'}, status=404)
@@ -175,7 +224,25 @@ class RescheduleRequestDetailView(APIView):
         if err:
             return err
 
+        old_reschedule_status = req.status
+
         serializer = RecruiterRescheduleResponseSerializer(req, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        new_reschedule_status = req.status
+        if old_reschedule_status != new_reschedule_status and new_reschedule_status in ('ACCEPTED', 'REJECTED'):
+            decision = "kabul edildi" if new_reschedule_status == 'ACCEPTED' else "reddedildi"
+            create_notification(
+                recipient=req.requested_by,
+                actor=request.user,
+                notification_type=(
+                    Notification.Type.RESCHEDULE_ACCEPTED if new_reschedule_status == 'ACCEPTED'
+                    else Notification.Type.RESCHEDULE_REJECTED
+                ),
+                title="Tarih değişikliği talebiniz sonuçlandı",
+                message=f"{req.job_application.job_post.title} için tarih değişikliği talebiniz {decision}.",
+                link="/my-applications",
+            )
+
         return Response(InterviewRescheduleRequestSerializer(req).data)

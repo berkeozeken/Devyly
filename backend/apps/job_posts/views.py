@@ -8,6 +8,8 @@ from rest_framework.viewsets import ModelViewSet
 
 from apps.job_applications.models import JobApplication
 from apps.job_applications.serializers import ApplySerializer, JobApplicationSerializer
+from apps.notifications.models import Notification
+from apps.notifications.services import create_notification
 from apps.users.models import User
 
 from .models import JobPost
@@ -38,6 +40,8 @@ class JobPostViewSet(ModelViewSet):
     def get_permissions(self):
         if self.action in ('list', 'retrieve'):
             return []
+        if self.action in ('apply', 'my_posts'):
+            return [IsAuthenticated()]
         return [IsAuthenticated(), IsRecruiter()]
 
     def get_queryset(self):
@@ -76,6 +80,15 @@ class JobPostViewSet(ModelViewSet):
             )
         except IntegrityError:
             return Response({'detail': 'Bu ilana zaten başvurdunuz.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        create_notification(
+            recipient=job_post.recruiter,
+            actor=request.user,
+            notification_type=Notification.Type.APPLICATION_RECEIVED,
+            title="Yeni başvuru aldınız",
+            message=f"{request.user.get_full_name()}, {job_post.title} ilanına başvurdu.",
+            link="/received-applications",
+        )
 
         return Response(
             JobApplicationSerializer(application).data,

@@ -3,6 +3,9 @@ import os
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
 
+from apps.developer_profiles.models import DeveloperProfile
+from apps.recruiter_profiles.models import RecruiterProfile
+
 User = get_user_model()
 
 ALLOWED_PHOTO_EXTENSIONS = {'.jpg', '.jpeg', '.png'}
@@ -113,3 +116,26 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if data['new_password'] != data['new_password_confirm']:
             raise serializers.ValidationError({'new_password_confirm': 'Şifreler eşleşmiyor.'})
         return data
+
+
+class PublicDeveloperProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeveloperProfile
+        fields = (
+            'id', 'title', 'bio', 'skills',
+            'github_url', 'linkedin_url', 'portfolio_url',
+            'location', 'years_of_experience', 'is_open_to_work',
+            'website', 'languages', 'education', 'work_experience',
+            'projects', 'certificates',
+            'created_at', 'updated_at',
+        )
+
+
+class PublicRecruiterProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RecruiterProfile
+        fields = (
+            'id', 'company_name', 'company_website', 'company_industry',
+            'company_location', 'position_title', 'bio', 'linkedin_url',
+            'is_hiring', 'created_at', 'updated_at',
+        )

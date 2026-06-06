@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Bell,
   Briefcase,
   Building2,
   UserCircle,
@@ -12,41 +13,51 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { getUser, clearTokens } from "@/lib/auth";
+import api from "@/lib/api";
 import type { UserRole } from "@/types";
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
+  showBadge?: boolean;
 }
 
 const developerNavItems: NavItem[] = [
-  { label: "Feed", href: "/feed", icon: Rss },
-  { label: "Jobs", href: "/jobs", icon: Search },
-  { label: "My Applications", href: "/my-applications", icon: FileText },
-  { label: "Profile", href: "/profile", icon: UserCircle },
+  { label: "Feed",            href: "/feed",             icon: Rss      },
+  { label: "Jobs",            href: "/jobs",             icon: Search   },
+  { label: "My Applications", href: "/my-applications",  icon: FileText },
+  { label: "Notifications",   href: "/notifications",    icon: Bell, showBadge: true },
+  { label: "Profile",         href: "/profile",          icon: UserCircle },
 ];
 
 const recruiterNavItems: NavItem[] = [
-  { label: "Feed", href: "/feed", icon: Rss },
-  { label: "My Jobs", href: "/my-jobs", icon: Briefcase },
-  { label: "Received Applications", href: "/received-applications", icon: Inbox },
-  { label: "Companies", href: "/companies", icon: Building2 },
-  { label: "Profile", href: "/profile", icon: UserCircle },
+  { label: "Feed",                  href: "/feed",                  icon: Rss      },
+  { label: "My Jobs",               href: "/my-jobs",               icon: Briefcase },
+  { label: "Received Applications", href: "/received-applications", icon: Inbox    },
+  { label: "Companies",             href: "/companies",             icon: Building2 },
+  { label: "Notifications",         href: "/notifications",         icon: Bell, showBadge: true },
+  { label: "Profile",               href: "/profile",               icon: UserCircle },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const user = getUser();
-    if (user) setUserRole(user.role);
+    if (user) {
+      setUserRole(user.role);
+      api
+        .get<{ unread_count: number }>("/notifications/unread-count/")
+        .then((res) => setUnreadCount(res.data.unread_count))
+        .catch(() => {});
+    }
   }, []);
 
   const visibleItems =
@@ -58,7 +69,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = () => {
     clearTokens();
-    router.push("/feed");
+    window.location.replace("/feed");
   };
 
   return (
@@ -70,8 +81,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {visibleItems.map(({ label, href, icon: Icon }) => {
+          {visibleItems.map(({ label, href, icon: Icon, showBadge }) => {
             const active = pathname === href;
+            const badge = showBadge ? unreadCount : 0;
             return (
               <Link
                 key={href}
@@ -83,7 +95,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 }`}
               >
                 <Icon size={16} />
-                {label}
+                <span className="flex-1">{label}</span>
+                {badge > 0 && (
+                  <span className="text-xs bg-blue-600 text-white rounded-full px-1.5 py-0.5 min-w-5 text-center leading-none">
+                    {badge > 9 ? "9+" : badge}
+                  </span>
+                )}
               </Link>
             );
           })}

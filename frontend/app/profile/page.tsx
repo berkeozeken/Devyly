@@ -1,13 +1,26 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { generateCvPdf } from "@/lib/cv-pdf";
 import { toast } from "sonner";
 
+import CvForm from "@/components/profile/CvForm";
+import CvPreview from "@/components/profile/CvPreview";
 import DeveloperProfileForm from "@/components/profile/DeveloperProfileForm";
 import RecruiterProfileForm from "@/components/profile/RecruiterProfileForm";
 import AppLayout from "@/components/layout/AppLayout";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -42,6 +55,144 @@ function getPhotoUrl(photo: string | null | undefined): string | null {
   if (photo.startsWith("http")) return photo;
   return `${MEDIA_BASE_URL}${photo}`;
 }
+
+/* ── CV Builder card ──────────────────────────────────────────── */
+
+function CvBuilderCard({ user, profile }: { user: User; profile: DeveloperProfile }) {
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [language, setLanguage] = useState(profile.cv_language_preference ?? "en");
+  const [includePhoto, setIncludePhoto] = useState(profile.include_profile_photo_in_cv ?? true);
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [pdfFilename, setPdfFilename] = useState("");
+  const [exporting, setExporting] = useState(false);
+
+  const defaultFilename = `${user.first_name.toLowerCase()}-${user.last_name.toLowerCase()}-${language}-cv`
+    .replace(/\s+/g, "-");
+
+  const openPdfModal = () => {
+    setPdfFilename(defaultFilename);
+    setPdfModalOpen(true);
+  };
+
+  const doExportPDF = async (rawName: string) => {
+    try {
+      const safe = rawName.trim().replace(/\s+/g, "-") || defaultFilename;
+      const fileName = safe.endsWith(".pdf") ? safe : `${safe}.pdf`;
+      await generateCvPdf({ filename: fileName, user, profile, language, includePhoto });
+      toast.success("CV PDF olarak indirildi.");
+    } catch (err) {
+      console.error("PDF export failed:", err);
+      toast.error("PDF oluşturulamadı.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleConfirmDownload = () => {
+    const safeName = pdfFilename.trim() || defaultFilename;
+    setPdfModalOpen(false);
+    setExporting(true);
+    window.setTimeout(() => doExportPDF(safeName), 150);
+  };
+
+  return (
+    <>
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <CardTitle className="text-base">CV Oluştur</CardTitle>
+              {!previewOpen && (
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Profil bilgilerinizden canlı önizleme ile CV oluşturabilir ve PDF olarak indirebilirsiniz.
+                </p>
+              )}
+            </div>
+            <Button
+              size="sm"
+              variant={previewOpen ? "outline" : "default"}
+              className="shrink-0"
+              onClick={() => setPreviewOpen(o => !o)}
+            >
+              {previewOpen ? "Önizlemeyi Kapat" : "CV Önizlemesini Aç"}
+            </Button>
+          </div>
+        </CardHeader>
+
+        {previewOpen && (
+          <CardContent className="space-y-4 pt-0">
+            {/* Settings bar */}
+            <div className="flex flex-wrap items-end gap-4 p-3 bg-gray-50 rounded-md">
+              <div className="space-y-0.5">
+                <Label className="text-xs text-gray-500">CV Dili</Label>
+                <Select value={language} onValueChange={v => setLanguage(v ?? "en")}>
+                  <SelectTrigger className="h-8 text-sm w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="tr">Türkçe</SelectItem>
+                    <SelectItem value="de">Deutsch</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="builder_include_photo"
+                  className="h-4 w-4 rounded border-gray-300"
+                  checked={includePhoto}
+                  onChange={e => setIncludePhoto(e.target.checked)}
+                />
+                <Label htmlFor="builder_include_photo" className="text-sm cursor-pointer text-gray-600">
+                  Profil fotoğrafını ekle
+                </Label>
+              </div>
+              <Button size="sm" className="ml-auto" onClick={openPdfModal}>
+                PDF İndir
+              </Button>
+            </div>
+
+            <CvPreview
+              user={user}
+              profile={profile}
+              language={language}
+              includePhoto={includePhoto}
+            />
+          </CardContent>
+        )}
+      </Card>
+
+      {/* PDF filename modal */}
+      <Dialog open={pdfModalOpen} onOpenChange={(o) => !o && setPdfModalOpen(false)}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>PDF dosya adı</DialogTitle>
+            <DialogDescription>
+              CV dosyasını indirmeden önce bir dosya adı belirleyin.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            placeholder={defaultFilename}
+            value={pdfFilename}
+            onChange={e => setPdfFilename(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && !exporting && handleConfirmDownload()}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPdfModalOpen(false)} disabled={exporting}>
+              İptal
+            </Button>
+            <Button onClick={handleConfirmDownload} disabled={exporting}>
+              {exporting ? "Oluşturuluyor..." : "PDF İndir"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+/* ── User info section ────────────────────────────────────────── */
 
 function UserInfoSection({ user, onUpdated }: { user: User; onUpdated: (u: User) => void }) {
   const [gender, setGender] = useState(user.gender ?? "");
@@ -231,10 +382,18 @@ function ProfileContent() {
             <UserInfoSection user={user} onUpdated={setUser} />
 
             {user.role === "DEVELOPER" && developerProfile ? (
-              <DeveloperProfileForm
-                profile={developerProfile}
-                onSaved={setDeveloperProfile}
-              />
+              <>
+                <DeveloperProfileForm
+                  profile={developerProfile}
+                  onSaved={setDeveloperProfile}
+                />
+                <CvForm
+                  key={`cvform-${developerProfile.id}-${developerProfile.updated_at}`}
+                  profile={developerProfile}
+                  onSaved={setDeveloperProfile}
+                />
+                <CvBuilderCard user={user} profile={developerProfile} />
+              </>
             ) : user.role === "RECRUITER" && recruiterProfile ? (
               <RecruiterProfileForm
                 profile={recruiterProfile}

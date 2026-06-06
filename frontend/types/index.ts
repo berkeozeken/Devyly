@@ -184,6 +184,46 @@ export interface JobPost {
   updated_at: string;
 }
 
+export interface CvLanguage {
+  language: string;
+  level: string;
+}
+
+export interface CvEducation {
+  school: string;
+  degree: string;
+  start_year: string;
+  end_year: string;
+  is_current?: boolean;
+  description: string;
+}
+
+export interface CvWorkExperience {
+  company: string;
+  position: string;
+  start_date: string;
+  end_date: string;
+  is_current: boolean;
+  description: string;
+}
+
+export interface CvProject {
+  name: string;
+  description: string;
+  technologies: string;
+  url: string;
+  start_date?: string;
+  end_date?: string;
+  is_current?: boolean;
+}
+
+export interface CvCertificate {
+  name: string;
+  issuer: string;
+  year: string;
+  url: string;
+}
+
 export interface DeveloperProfile {
   id: number;
   title: string;
@@ -195,6 +235,15 @@ export interface DeveloperProfile {
   location: string;
   years_of_experience: number | null;
   is_open_to_work: boolean;
+  phone?: string;
+  website?: string;
+  languages?: CvLanguage[];
+  education?: CvEducation[];
+  work_experience?: CvWorkExperience[];
+  projects?: CvProject[];
+  certificates?: CvCertificate[];
+  cv_language_preference?: string;
+  include_profile_photo_in_cv?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -226,6 +275,25 @@ export interface FeedPost {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface Notification {
+  id: number;
+  actor: number | null;
+  actor_name: string | null;
+  actor_role: string | null;
+  type: string;
+  title: string;
+  message: string;
+  link: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface PublicProfile {
+  user: User;
+  developer_profile: DeveloperProfile | null;
+  recruiter_profile: RecruiterProfile | null;
 }
 
 export interface EmailLog {

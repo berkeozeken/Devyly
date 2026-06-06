@@ -64,7 +64,7 @@ export default function LoginPage() {
       } else if (next) {
         router.push("/feed");
       } else {
-        router.push("/dashboard");
+        router.push("/feed");
       }
     } catch (err: unknown) {
       const message =

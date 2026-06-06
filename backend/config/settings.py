@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'apps.job_posts',
     'apps.job_applications',
     'apps.feed_posts',
+    'apps.notifications',
 ]
 
 AUTH_USER_MODEL = 'users.User'

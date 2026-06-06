@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import Link from "next/link";
+
 import AppLayout from "@/components/layout/AppLayout";
 import PublicLayout from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
@@ -329,14 +331,19 @@ export default function FeedPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <PostAvatar
-                      name={post.author_name}
-                      photo={post.author_profile_photo}
-                      gender={post.author_gender}
-                    />
-                    <span className="text-sm font-medium text-gray-800 truncate">
+                    <Link href={`/users/${post.author}`} className="shrink-0">
+                      <PostAvatar
+                        name={post.author_name}
+                        photo={post.author_profile_photo}
+                        gender={post.author_gender}
+                      />
+                    </Link>
+                    <Link
+                      href={`/users/${post.author}`}
+                      className="text-sm font-medium text-gray-800 truncate hover:text-blue-600 hover:underline"
+                    >
                       {post.author_name}
-                    </span>
+                    </Link>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${badgeClass}`}>
                       {post.author_role}
                     </span>
