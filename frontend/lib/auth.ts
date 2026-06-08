@@ -43,6 +43,7 @@ export const clearTokens = () => {
 export const setUser = (user: User, rememberMe = true) => {
   if (typeof window === "undefined") return;
   getStorage(rememberMe).setItem(USER_KEY, JSON.stringify(user));
+  window.dispatchEvent(new CustomEvent("devyly:user-updated", { detail: user }));
 };
 
 export const getUser = (): User | null => {

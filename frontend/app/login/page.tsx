@@ -80,7 +80,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Devyly</CardTitle>
@@ -118,11 +118,11 @@ export default function LoginPage() {
               <input
                 id="remember"
                 type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 accent-blue-600 cursor-pointer"
+                className="h-4 w-4 rounded border-border accent-primary cursor-pointer"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
               />
-              <Label htmlFor="remember" className="text-sm font-normal text-gray-600 cursor-pointer">
+              <Label htmlFor="remember" className="text-sm font-normal text-muted-foreground cursor-pointer">
                 Beni hatırla
               </Label>
             </div>
@@ -132,7 +132,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-gray-500 mt-4">
+          <p className="text-center text-sm text-muted-foreground mt-4">
             Hesabınız yok mu?{" "}
             <Link href="/register" className="text-blue-600 hover:underline">
               Kayıt Ol

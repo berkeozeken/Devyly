@@ -43,12 +43,10 @@ function NotificationsContent() {
           prev.map((item) => (item.id === n.id ? { ...item, is_read: true } : item))
         );
       } catch {
-        // Silent — navigate anyway
+        // silent
       }
     }
-    if (n.link) {
-      router.push(n.link);
-    }
+    if (n.link) router.push(n.link);
   };
 
   const handleDelete = async (id: number, e: React.MouseEvent) => {
@@ -80,9 +78,9 @@ function NotificationsContent() {
       <div className="max-w-2xl mx-auto px-6 py-8 space-y-5">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-700">Notifications</h2>
+            <h2 className="text-2xl font-semibold text-foreground">Bildirimler</h2>
             {unreadCount > 0 && (
-              <p className="text-xs text-gray-400 mt-0.5">{unreadCount} okunmamış bildirim</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{unreadCount} okunmamış bildirim</p>
             )}
           </div>
           {unreadCount > 0 && (
@@ -98,36 +96,42 @@ function NotificationsContent() {
         </div>
 
         {loading ? (
-          <p className="text-sm text-gray-400">Yükleniyor...</p>
+          <p className="text-sm text-muted-foreground">Yükleniyor...</p>
         ) : notifications.length === 0 ? (
-          <p className="text-sm text-gray-400">Henüz bildiriminiz yok.</p>
+          <p className="text-sm text-muted-foreground">Henüz bildiriminiz yok.</p>
         ) : (
           <div className="space-y-2">
             {notifications.map((n) => (
               <div
                 key={n.id}
                 onClick={() => handleMarkRead(n)}
-                className={`relative border rounded-lg px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50 ${
-                  n.is_read ? "bg-white" : "bg-blue-50 border-blue-200"
-                }`}
+                className={[
+                  "relative border rounded-xl px-4 py-3 cursor-pointer transition-colors",
+                  n.is_read
+                    ? "bg-card border-border hover:bg-muted/60"
+                    : "bg-primary/5 border-primary/20 hover:bg-primary/10 dark:bg-primary/10 dark:border-primary/25",
+                ].join(" ")}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0 space-y-0.5">
-                    <p className={`text-sm ${n.is_read ? "text-gray-800" : "font-semibold text-gray-900"}`}>
+                    <p className={`text-sm ${n.is_read ? "text-foreground" : "font-semibold text-foreground"}`}>
                       {n.title}
                     </p>
                     {n.message && (
-                      <p className="text-xs text-gray-500 leading-relaxed">{n.message}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{n.message}</p>
                     )}
-                    <p className="text-xs text-gray-400">{timeAgo(n.created_at)}</p>
+                    <p className="text-xs text-muted-foreground/60">{timeAgo(n.created_at)}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {!n.is_read && (
-                      <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: "var(--brand)", boxShadow: "0 0 4px var(--brand)" }}
+                      />
                     )}
                     <button
                       onClick={(e) => handleDelete(n.id, e)}
-                      className="text-gray-300 hover:text-red-400 text-xs p-1 rounded transition-colors"
+                      className="text-muted-foreground/50 hover:text-red-400 text-xs p-1 rounded transition-colors"
                       title="Sil"
                     >
                       ✕

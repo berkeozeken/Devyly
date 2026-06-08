@@ -139,3 +139,53 @@ class PublicRecruiterProfileSerializer(serializers.ModelSerializer):
             'company_location', 'position_title', 'bio', 'linkedin_url',
             'is_hiring', 'created_at', 'updated_at',
         )
+
+
+class PublicDeveloperListSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='user.id')
+    name = serializers.SerializerMethodField()
+    role = serializers.CharField(source='user.role')
+    profile_photo = serializers.SerializerMethodField()
+    gender = serializers.CharField(source='user.gender', allow_null=True)
+    open_to_work = serializers.BooleanField(source='is_open_to_work')
+
+    class Meta:
+        model = DeveloperProfile
+        fields = ('id', 'name', 'role', 'profile_photo', 'gender', 'title', 'location', 'skills', 'open_to_work')
+
+    def get_name(self, obj):
+        return obj.user.get_full_name()
+
+    def get_profile_photo(self, obj):
+        if not obj.user.profile_photo:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.user.profile_photo.url)
+        return obj.user.profile_photo.url
+
+
+class PublicRecruiterListSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='user.id')
+    name = serializers.SerializerMethodField()
+    role = serializers.CharField(source='user.role')
+    profile_photo = serializers.SerializerMethodField()
+    gender = serializers.CharField(source='user.gender', allow_null=True)
+    title = serializers.CharField(source='position_title')
+    industry = serializers.CharField(source='company_industry')
+    location = serializers.CharField(source='company_location')
+
+    class Meta:
+        model = RecruiterProfile
+        fields = ('id', 'name', 'role', 'profile_photo', 'gender', 'title', 'company_name', 'industry', 'location', 'is_hiring')
+
+    def get_name(self, obj):
+        return obj.user.get_full_name()
+
+    def get_profile_photo(self, obj):
+        if not obj.user.profile_photo:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.user.profile_photo.url)
+        return obj.user.profile_photo.url

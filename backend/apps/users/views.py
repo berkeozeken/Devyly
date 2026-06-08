@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.mail import send_mail
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
@@ -12,13 +13,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.developer_profiles.models import DeveloperProfile
 from apps.email_service.models import EmailLog
+from apps.recruiter_profiles.models import RecruiterProfile
 
 from .serializers import (
     LoginSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
+    PublicDeveloperListSerializer,
     PublicDeveloperProfileSerializer,
+    PublicRecruiterListSerializer,
     PublicRecruiterProfileSerializer,
     RegisterSerializer,
     UserProfileUpdateSerializer,
@@ -186,6 +191,52 @@ class PasswordResetConfirmView(APIView):
 def _get_frontend_url():
     from django.conf import settings
     return getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+
+
+class PublicDeveloperListView(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+        qs = DeveloperProfile.objects.select_related('user').filter(user__is_active=True)
+        search = request.query_params.get('search', '').strip()
+        location = request.query_params.get('location', '').strip()
+        open_to_work = request.query_params.get('open_to_work', '').strip()
+        if search:
+            qs = qs.filter(
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search) |
+                Q(title__icontains=search) |
+                Q(skills__icontains=search)
+            )
+        if location:
+            qs = qs.filter(location__icontains=location)
+        if open_to_work == 'true':
+            qs = qs.filter(is_open_to_work=True)
+        serializer = PublicDeveloperListSerializer(qs, many=True, context={'request': request})
+        return Response(serializer.data)
+
+
+class PublicRecruiterListView(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+        qs = RecruiterProfile.objects.select_related('user').filter(user__is_active=True)
+        search = request.query_params.get('search', '').strip()
+        location = request.query_params.get('location', '').strip()
+        is_hiring = request.query_params.get('is_hiring', '').strip()
+        if search:
+            qs = qs.filter(
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search) |
+                Q(company_name__icontains=search) |
+                Q(company_industry__icontains=search)
+            )
+        if location:
+            qs = qs.filter(company_location__icontains=location)
+        if is_hiring == 'true':
+            qs = qs.filter(is_hiring=True)
+        serializer = PublicRecruiterListSerializer(qs, many=True, context={'request': request})
+        return Response(serializer.data)
 
 
 class PublicUserProfileView(APIView):

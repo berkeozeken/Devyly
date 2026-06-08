@@ -1,33 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { generateCvPdf } from "@/lib/cv-pdf";
 import { toast } from "sonner";
 
-import CvForm from "@/components/profile/CvForm";
-import CvPreview from "@/components/profile/CvPreview";
 import DeveloperProfileForm from "@/components/profile/DeveloperProfileForm";
 import RecruiterProfileForm from "@/components/profile/RecruiterProfileForm";
 import AppLayout from "@/components/layout/AppLayout";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import api from "@/lib/api";
 import { setUser as storeUser } from "@/lib/auth";
@@ -37,7 +23,7 @@ function getAvatarColor(gender?: string | null) {
   const g = gender?.toUpperCase();
   if (g === "MALE") return "bg-blue-100 text-blue-700";
   if (g === "FEMALE") return "bg-pink-100 text-pink-700";
-  return "bg-gray-200 text-gray-600";
+  return "bg-muted text-muted-foreground";
 }
 
 const GENDER_OPTIONS = [
@@ -54,142 +40,6 @@ function getPhotoUrl(photo: string | null | undefined): string | null {
   if (!photo) return null;
   if (photo.startsWith("http")) return photo;
   return `${MEDIA_BASE_URL}${photo}`;
-}
-
-/* ── CV Builder card ──────────────────────────────────────────── */
-
-function CvBuilderCard({ user, profile }: { user: User; profile: DeveloperProfile }) {
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [language, setLanguage] = useState(profile.cv_language_preference ?? "en");
-  const [includePhoto, setIncludePhoto] = useState(profile.include_profile_photo_in_cv ?? true);
-  const [pdfModalOpen, setPdfModalOpen] = useState(false);
-  const [pdfFilename, setPdfFilename] = useState("");
-  const [exporting, setExporting] = useState(false);
-
-  const defaultFilename = `${user.first_name.toLowerCase()}-${user.last_name.toLowerCase()}-${language}-cv`
-    .replace(/\s+/g, "-");
-
-  const openPdfModal = () => {
-    setPdfFilename(defaultFilename);
-    setPdfModalOpen(true);
-  };
-
-  const doExportPDF = async (rawName: string) => {
-    try {
-      const safe = rawName.trim().replace(/\s+/g, "-") || defaultFilename;
-      const fileName = safe.endsWith(".pdf") ? safe : `${safe}.pdf`;
-      await generateCvPdf({ filename: fileName, user, profile, language, includePhoto });
-      toast.success("CV PDF olarak indirildi.");
-    } catch (err) {
-      console.error("PDF export failed:", err);
-      toast.error("PDF oluşturulamadı.");
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const handleConfirmDownload = () => {
-    const safeName = pdfFilename.trim() || defaultFilename;
-    setPdfModalOpen(false);
-    setExporting(true);
-    window.setTimeout(() => doExportPDF(safeName), 150);
-  };
-
-  return (
-    <>
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <CardTitle className="text-base">CV Oluştur</CardTitle>
-              {!previewOpen && (
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Profil bilgilerinizden canlı önizleme ile CV oluşturabilir ve PDF olarak indirebilirsiniz.
-                </p>
-              )}
-            </div>
-            <Button
-              size="sm"
-              variant={previewOpen ? "outline" : "default"}
-              className="shrink-0"
-              onClick={() => setPreviewOpen(o => !o)}
-            >
-              {previewOpen ? "Önizlemeyi Kapat" : "CV Önizlemesini Aç"}
-            </Button>
-          </div>
-        </CardHeader>
-
-        {previewOpen && (
-          <CardContent className="space-y-4 pt-0">
-            {/* Settings bar */}
-            <div className="flex flex-wrap items-end gap-4 p-3 bg-gray-50 rounded-md">
-              <div className="space-y-0.5">
-                <Label className="text-xs text-gray-500">CV Dili</Label>
-                <Select value={language} onValueChange={v => setLanguage(v ?? "en")}>
-                  <SelectTrigger className="h-8 text-sm w-36">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="tr">Türkçe</SelectItem>
-                    <SelectItem value="de">Deutsch</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="builder_include_photo"
-                  className="h-4 w-4 rounded border-gray-300"
-                  checked={includePhoto}
-                  onChange={e => setIncludePhoto(e.target.checked)}
-                />
-                <Label htmlFor="builder_include_photo" className="text-sm cursor-pointer text-gray-600">
-                  Profil fotoğrafını ekle
-                </Label>
-              </div>
-              <Button size="sm" className="ml-auto" onClick={openPdfModal}>
-                PDF İndir
-              </Button>
-            </div>
-
-            <CvPreview
-              user={user}
-              profile={profile}
-              language={language}
-              includePhoto={includePhoto}
-            />
-          </CardContent>
-        )}
-      </Card>
-
-      {/* PDF filename modal */}
-      <Dialog open={pdfModalOpen} onOpenChange={(o) => !o && setPdfModalOpen(false)}>
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>PDF dosya adı</DialogTitle>
-            <DialogDescription>
-              CV dosyasını indirmeden önce bir dosya adı belirleyin.
-            </DialogDescription>
-          </DialogHeader>
-          <Input
-            placeholder={defaultFilename}
-            value={pdfFilename}
-            onChange={e => setPdfFilename(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && !exporting && handleConfirmDownload()}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPdfModalOpen(false)} disabled={exporting}>
-              İptal
-            </Button>
-            <Button onClick={handleConfirmDownload} disabled={exporting}>
-              {exporting ? "Oluşturuluyor..." : "PDF İndir"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
 }
 
 /* ── User info section ────────────────────────────────────────── */
@@ -245,8 +95,8 @@ function UserInfoSection({ user, onUpdated }: { user: User; onUpdated: (u: User)
   const currentPhoto = getPhotoUrl(user.profile_photo);
 
   return (
-    <div className="border rounded-lg p-4 space-y-4 bg-white">
-      <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Kullanıcı Bilgileri</h3>
+    <div className="border border-border rounded-xl p-4 space-y-4 bg-card">
+      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Kullanıcı Bilgileri</h3>
 
       {/* Profile photo */}
       <div className="space-y-2">
@@ -268,7 +118,7 @@ function UserInfoSection({ user, onUpdated }: { user: User; onUpdated: (u: User)
               ref={fileInputRef}
               type="file"
               accept="image/png,image/jpeg"
-              className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
+              className="text-xs text-muted-foreground file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-muted file:text-foreground hover:file:bg-muted/80 cursor-pointer"
               onChange={handlePhotoChange}
             />
             {currentPhoto && !removePhoto && (
@@ -286,10 +136,10 @@ function UserInfoSection({ user, onUpdated }: { user: User; onUpdated: (u: User)
             )}
             {removePhoto && (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400">Fotoğraf kaldırılacak.</span>
+                <span className="text-xs text-muted-foreground/60">Fotoğraf kaldırılacak.</span>
                 <button
                   type="button"
-                  className="text-xs text-gray-500 hover:text-gray-700 underline"
+                  className="text-xs text-muted-foreground hover:text-foreground underline"
                   onClick={() => setRemovePhoto(false)}
                 >
                   Geri Al
@@ -304,12 +154,14 @@ function UserInfoSection({ user, onUpdated }: { user: User; onUpdated: (u: User)
       <div className="space-y-1">
         <Label className="text-sm">Cinsiyet (opsiyonel)</Label>
         <Select value={gender} onValueChange={(v) => setGender(v ?? "")}>
-          <SelectTrigger className="max-w-xs">
-            <SelectValue placeholder="Seçiniz..." />
+          <SelectTrigger className="w-full max-w-xs h-10 rounded-xl border-border bg-muted/40 text-sm focus:ring-2 focus:ring-primary/30">
+            <span className={gender ? "text-foreground" : "text-muted-foreground"}>
+              {gender ? (GENDER_OPTIONS.find(o => o.value === gender)?.label ?? gender) : "Cinsiyet seçin"}
+            </span>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="rounded-xl border-border bg-card text-foreground shadow-lg">
             {GENDER_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
+              <SelectItem key={o.value} value={o.value} className="text-sm cursor-pointer rounded-lg">
                 {o.label}
               </SelectItem>
             ))}
@@ -318,7 +170,7 @@ function UserInfoSection({ user, onUpdated }: { user: User; onUpdated: (u: User)
         {gender && (
           <button
             type="button"
-            className="text-xs text-gray-400 hover:text-gray-600"
+            className="text-xs text-muted-foreground/70 hover:text-muted-foreground transition-colors"
             onClick={() => setGender("")}
           >
             Seçimi Temizle
@@ -366,34 +218,28 @@ function ProfileContent() {
     <AppLayout>
       <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-700">Profile</h2>
+          <h2 className="text-2xl font-semibold text-foreground">Profil</h2>
           {user && (
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {user.first_name} {user.last_name} ·{" "}
-              <span className="font-medium text-gray-500">{user.role}</span>
+              <span className="font-medium text-muted-foreground">
+                {user.role === "DEVELOPER" ? "Geliştirici" : "İşveren"}
+              </span>
             </p>
           )}
         </div>
 
         {loading ? (
-          <p className="text-sm text-gray-400">Yükleniyor...</p>
+          <p className="text-sm text-muted-foreground">Yükleniyor...</p>
         ) : user ? (
           <>
             <UserInfoSection user={user} onUpdated={setUser} />
 
             {user.role === "DEVELOPER" && developerProfile ? (
-              <>
-                <DeveloperProfileForm
-                  profile={developerProfile}
-                  onSaved={setDeveloperProfile}
-                />
-                <CvForm
-                  key={`cvform-${developerProfile.id}-${developerProfile.updated_at}`}
-                  profile={developerProfile}
-                  onSaved={setDeveloperProfile}
-                />
-                <CvBuilderCard user={user} profile={developerProfile} />
-              </>
+              <DeveloperProfileForm
+                profile={developerProfile}
+                onSaved={setDeveloperProfile}
+              />
             ) : user.role === "RECRUITER" && recruiterProfile ? (
               <RecruiterProfileForm
                 profile={recruiterProfile}

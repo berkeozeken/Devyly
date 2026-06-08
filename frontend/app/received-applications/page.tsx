@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -20,6 +20,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import api from "@/lib/api";
 import type {
+  Conversation,
   InterviewRescheduleRequest,
   JobApplication,
   JobApplicationStatus,
@@ -27,16 +28,27 @@ import type {
 } from "@/types";
 
 const STATUS_COLORS: Record<JobApplicationStatus, string> = {
-  APPLIED: "bg-blue-100 text-blue-700",
-  REVIEWING: "bg-yellow-100 text-yellow-700",
-  INTERVIEW: "bg-purple-100 text-purple-700",
-  REJECTED: "bg-red-100 text-red-700",
-  ACCEPTED: "bg-emerald-100 text-emerald-700",
+  APPLIED: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400",
+  REVIEWING: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
+  INTERVIEW: "bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400",
+  REJECTED: "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400",
+  ACCEPTED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
 };
 
 const STATUS_OPTIONS: JobApplicationStatus[] = [
   "APPLIED", "REVIEWING", "INTERVIEW", "REJECTED", "ACCEPTED",
 ];
+
+const REC_STATUS_LABELS: Record<string, string> = {
+  all: "Tüm Durumlar", APPLIED: "Başvuruldu", REVIEWING: "İnceleniyor",
+  INTERVIEW: "Mülakat", REJECTED: "Reddedildi", ACCEPTED: "Kabul Edildi",
+};
+const RESCHEDULE_LABELS: Record<string, string> = {
+  PENDING: "Beklemede", ACCEPTED: "Kabul Edildi", REJECTED: "Reddedildi",
+};
+const REC_ORDERING_LABELS: Record<string, string> = {
+  newest: "En Yeni", oldest: "En Eski", status: "Duruma Göre", interview_date: "Mülakat Tarihi",
+};
 
 interface InterviewDraft {
   interview_date: string;
@@ -60,51 +72,70 @@ function ReceivedApplicationsContent() {
   const [rescheduleDrafts, setRescheduleDrafts] = useState<Record<number, RescheduleDraft>>({});
   const [editingRescheduleIds, setEditingRescheduleIds] = useState<number[]>([]);
 
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [ordering, setOrdering] = useState("newest");
+
   useEffect(() => {
-    const init = async () => {
-      try {
-        const [appsRes, reqsRes] = await Promise.all([
-          api.get<JobApplication[]>("/job-applications/received/"),
-          api.get<InterviewRescheduleRequest[]>("/interview-reschedule-requests/received/"),
-        ]);
-        setApps(appsRes.data);
-        setRescheduleRequests(reqsRes.data);
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
-        const initDrafts: Record<number, InterviewDraft> = {};
-        appsRes.data.forEach((a) => {
-          initDrafts[a.id] = {
-            interview_date: a.interview_date ? new Date(a.interview_date).toISOString().slice(0, 16) : "",
-            interview_link: a.interview_link,
-            interview_note: a.interview_note,
-          };
-        });
-        setDrafts(initDrafts);
+  // Filtreli fetch — draft state'i sıfırlar
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (debouncedSearch) params.set("search", debouncedSearch);
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      params.set("ordering", ordering);
 
-        const appMap: Record<number, JobApplication> = {};
-        appsRes.data.forEach((a) => { appMap[a.id] = a; });
+      const [appsRes, reqsRes] = await Promise.all([
+        api.get<JobApplication[]>(`/job-applications/received/?${params.toString()}`),
+        api.get<InterviewRescheduleRequest[]>("/interview-reschedule-requests/received/"),
+      ]);
+      setApps(appsRes.data);
+      setRescheduleRequests(reqsRes.data);
 
-        const initRescheduleDrafts: Record<number, RescheduleDraft> = {};
-        reqsRes.data.forEach((r) => {
-          const relatedApp = appMap[r.job_application];
-          initRescheduleDrafts[r.id] = {
-            status: r.status,
-            recruiter_response: r.recruiter_response,
-            new_interview_date: relatedApp?.interview_date
-              ? new Date(relatedApp.interview_date).toISOString().slice(0, 16)
-              : "",
-            new_interview_link: relatedApp?.interview_link ?? "",
-            new_interview_note: relatedApp?.interview_note ?? "",
-          };
-        });
-        setRescheduleDrafts(initRescheduleDrafts);
-      } catch {
-        toast.error("Başvurular yüklenemedi.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    init();
-  }, []);
+      const initDrafts: Record<number, InterviewDraft> = {};
+      appsRes.data.forEach((a) => {
+        initDrafts[a.id] = {
+          interview_date: a.interview_date ? new Date(a.interview_date).toISOString().slice(0, 16) : "",
+          interview_link: a.interview_link,
+          interview_note: a.interview_note,
+        };
+      });
+      setDrafts(initDrafts);
+
+      const appMap: Record<number, JobApplication> = {};
+      appsRes.data.forEach((a) => { appMap[a.id] = a; });
+
+      const initRescheduleDrafts: Record<number, RescheduleDraft> = {};
+      reqsRes.data.forEach((r) => {
+        const relatedApp = appMap[r.job_application];
+        initRescheduleDrafts[r.id] = {
+          status: r.status,
+          recruiter_response: r.recruiter_response,
+          new_interview_date: relatedApp?.interview_date
+            ? new Date(relatedApp.interview_date).toISOString().slice(0, 16)
+            : "",
+          new_interview_link: relatedApp?.interview_link ?? "",
+          new_interview_note: relatedApp?.interview_note ?? "",
+        };
+      });
+      setRescheduleDrafts(initRescheduleDrafts);
+      setEditingRescheduleIds([]);
+    } catch {
+      toast.error("Başvurular yüklenemedi.");
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedSearch, statusFilter, ordering]);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
 
   const getLatestReschedule = (appId: number) =>
     rescheduleRequests.find((r) => r.job_application === appId);
@@ -277,15 +308,81 @@ function ReceivedApplicationsContent() {
     }));
   };
 
+  const handleStartConversation = async (appId: number) => {
+    try {
+      const res = await api.post<Conversation>("/conversations/start/", { job_application: appId });
+      window.dispatchEvent(
+        new CustomEvent("devyly:open-chat", { detail: { conversationId: res.data.id } })
+      );
+    } catch {
+      toast.error("Konuşma başlatılamadı.");
+    }
+  };
+
+  const hasFilters = debouncedSearch || statusFilter !== "all" || ordering !== "newest";
+
+  const clearFilters = () => {
+    setSearch("");
+    setDebouncedSearch("");
+    setStatusFilter("all");
+    setOrdering("newest");
+  };
+
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-        <h2 className="text-2xl font-semibold text-gray-700">Received Applications</h2>
+        <h2 className="text-2xl font-bold tracking-tight text-foreground">Gelen Başvurular</h2>
+
+        {/* Filtre bar */}
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <div className="flex flex-wrap gap-3 items-center">
+            <Input
+              className="h-11 text-sm w-52"
+              placeholder="Aday adı, email veya ilan..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
+              <SelectTrigger className="h-11 text-sm w-36">
+                <SelectValue>{REC_STATUS_LABELS[statusFilter]}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-sm">Tüm Durumlar</SelectItem>
+                <SelectItem value="APPLIED" className="text-sm">Başvuruldu</SelectItem>
+                <SelectItem value="REVIEWING" className="text-sm">İnceleniyor</SelectItem>
+                <SelectItem value="INTERVIEW" className="text-sm">Mülakat</SelectItem>
+                <SelectItem value="REJECTED" className="text-sm">Reddedildi</SelectItem>
+                <SelectItem value="ACCEPTED" className="text-sm">Kabul Edildi</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={ordering} onValueChange={(v) => setOrdering(v ?? "newest")}>
+              <SelectTrigger className="h-11 text-sm w-40">
+                <SelectValue>{REC_ORDERING_LABELS[ordering]}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest" className="text-sm">En Yeni</SelectItem>
+                <SelectItem value="oldest" className="text-sm">En Eski</SelectItem>
+                <SelectItem value="status" className="text-sm">Duruma Göre</SelectItem>
+                <SelectItem value="interview_date" className="text-sm">Mülakat Tarihi</SelectItem>
+              </SelectContent>
+            </Select>
+            {hasFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-11 text-sm text-muted-foreground"
+                onClick={clearFilters}
+              >
+                Temizle
+              </Button>
+            )}
+          </div>
+        </div>
 
         {loading ? (
-          <p className="text-sm text-gray-400">Yükleniyor...</p>
+          <p className="text-sm text-muted-foreground">Yükleniyor...</p>
         ) : apps.length === 0 ? (
-          <p className="text-sm text-gray-400">Henüz gelen başvuru yok.</p>
+          <p className="text-sm text-muted-foreground">Henüz gelen başvuru yok.</p>
         ) : (
           <div className="space-y-4">
             {apps.map((app) => {
@@ -295,47 +392,59 @@ function ReceivedApplicationsContent() {
               return (
                 <Card key={app.id}>
                   <CardContent className="py-4 space-y-4">
-                    {/* Candidate info + status */}
+                    {/* Aday bilgisi + durum */}
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="flex-1 min-w-0 space-y-1">
                         <Link
                           href={`/users/${app.developer}`}
-                          className="font-medium text-gray-800 hover:text-blue-600 hover:underline"
+                          className="font-medium text-foreground hover:text-primary hover:underline"
                         >
                           {app.developer_name}
                         </Link>
-                        <p className="text-xs text-gray-400">{app.developer_email}</p>
-                        <p className="text-sm text-gray-600">{app.job_title} — {app.company_name}</p>
+                        <p className="text-xs text-muted-foreground">{app.developer_email}</p>
+                        <p className="text-sm text-muted-foreground">{app.job_title} — {app.company_name}</p>
                         {app.cover_letter && (
-                          <p className="text-sm text-gray-500 line-clamp-2">{app.cover_letter}</p>
+                          <p className="text-sm text-muted-foreground line-clamp-2">{app.cover_letter}</p>
                         )}
-                        <p className="text-xs text-gray-300">
-                          {new Date(app.created_at).toLocaleDateString("tr-TR")}
-                        </p>
+                        <div className="flex items-center gap-2 pt-1">
+                          <p className="text-xs text-muted-foreground/50">
+                            {new Date(app.created_at).toLocaleDateString("tr-TR")}
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 text-xs px-2"
+                            onClick={() => handleStartConversation(app.id)}
+                          >
+                            Adayla Konuş
+                          </Button>
+                        </div>
                       </div>
                       <span className={`self-start text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${STATUS_COLORS[app.status]}`}>
-                        {app.status}
+                        {REC_STATUS_LABELS[app.status] ?? app.status}
                       </span>
                       <div className="w-36 shrink-0">
                         <Select
                           value={app.status}
                           onValueChange={(v) => handleStatusChange(app.id, v as JobApplicationStatus)}
                         >
-                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue>{REC_STATUS_LABELS[app.status] ?? app.status}</SelectValue>
+                          </SelectTrigger>
                           <SelectContent>
                             {STATUS_OPTIONS.map((s) => (
-                              <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                              <SelectItem key={s} value={s} className="text-xs">{REC_STATUS_LABELS[s] ?? s}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
 
-                    {/* Interview fields + reschedule — only visible when INTERVIEW and no rejected reschedule */}
+                    {/* Mülakat bilgileri + tarih değişikliği — sadece INTERVIEW durumunda */}
                     {isInterviewActive && (
                       <>
                     <div className="border-t pt-3 space-y-3">
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Mülakat Bilgileri</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Mülakat Bilgileri</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Mülakat Tarihi</Label>
@@ -361,52 +470,51 @@ function ReceivedApplicationsContent() {
                       </Button>
                     </div>
 
-                    {/* Reschedule request history */}
+                    {/* Tarih değişikliği talebi */}
                     {latestReschedule && (
-                      <div className={`border-t pt-3 space-y-3 rounded-md p-3 ${
+                      <div className={`border-t pt-3 space-y-3 rounded-xl p-3 ${
                         latestReschedule.status === "PENDING"
-                          ? "bg-yellow-50"
+                          ? "bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40"
                           : latestReschedule.status === "ACCEPTED"
-                          ? "bg-green-50"
-                          : "bg-gray-50"
+                          ? "bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40"
+                          : "bg-muted border border-border"
                       }`}>
                         <div className="flex items-center gap-2">
                           <p className={`text-xs font-semibold uppercase tracking-wide ${
                             latestReschedule.status === "PENDING"
-                              ? "text-yellow-700"
+                              ? "text-amber-700 dark:text-amber-400"
                               : latestReschedule.status === "ACCEPTED"
-                              ? "text-green-700"
-                              : "text-gray-500"
+                              ? "text-emerald-700 dark:text-emerald-400"
+                              : "text-muted-foreground"
                           }`}>
                             {latestReschedule.status === "PENDING" ? "⚠ " : ""}Tarih Değişikliği Talebi
                           </p>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                             latestReschedule.status === "PENDING"
-                              ? "bg-yellow-100 text-yellow-700"
+                              ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
                               : latestReschedule.status === "ACCEPTED"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-500"
+                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                              : "bg-muted text-muted-foreground"
                           }`}>
-                            {latestReschedule.status}
+                            {RESCHEDULE_LABELS[latestReschedule.status] ?? latestReschedule.status}
                           </span>
                         </div>
                         {latestReschedule.reason && (
-                          <p className="text-sm text-gray-700">
+                          <p className="text-sm text-muted-foreground">
                             <span className="font-medium">Neden:</span> {latestReschedule.reason}
                           </p>
                         )}
-                        <p className="text-sm text-gray-700 whitespace-pre-line">
+                        <p className="text-sm text-muted-foreground whitespace-pre-line">
                           <span className="font-medium">Uygun saatler:</span>{"\n"}
                           {latestReschedule.available_slots}
                         </p>
                         {latestReschedule.recruiter_response && (
-                          <p className="text-sm text-gray-600 italic">
+                          <p className="text-sm text-muted-foreground italic">
                             <span className="font-medium not-italic">Yanıt:</span>{" "}
                             {latestReschedule.recruiter_response}
                           </p>
                         )}
 
-                        {/* Action form */}
                         {rescheduleDrafts[latestReschedule.id] && (
                           latestReschedule.status === "PENDING" || editingRescheduleIds.includes(latestReschedule.id)
                             ? (
@@ -421,9 +529,9 @@ function ReceivedApplicationsContent() {
                                   >
                                     <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="PENDING" className="text-xs">PENDING</SelectItem>
-                                      <SelectItem value="ACCEPTED" className="text-xs">ACCEPTED</SelectItem>
-                                      <SelectItem value="REJECTED" className="text-xs">REJECTED</SelectItem>
+                                      <SelectItem value="PENDING" className="text-xs">Beklemede</SelectItem>
+                                      <SelectItem value="ACCEPTED" className="text-xs">Kabul Et</SelectItem>
+                                      <SelectItem value="REJECTED" className="text-xs">Reddet</SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </div>
@@ -437,8 +545,8 @@ function ReceivedApplicationsContent() {
                                   }
                                 />
                                 {rescheduleDrafts[latestReschedule.id].status === "ACCEPTED" && latestReschedule.status !== "ACCEPTED" && (
-                                  <div className="space-y-2 border border-green-200 rounded-md p-3 bg-green-50">
-                                    <p className="text-xs font-semibold text-green-700">Yeni Mülakat Bilgileri</p>
+                                  <div className="space-y-2 border border-emerald-200 dark:border-emerald-800 rounded-md p-3 bg-emerald-50 dark:bg-emerald-950/20">
+                                    <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Yeni Mülakat Bilgileri</p>
                                     <div className="space-y-1">
                                       <Label className="text-xs">Yeni Mülakat Tarihi *</Label>
                                       <Input

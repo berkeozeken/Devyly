@@ -16,12 +16,10 @@ import type { DeveloperProfile } from "@/types";
 const schema = z.object({
   title: z.string().optional(),
   bio: z.string().optional(),
-  skills: z.string().optional(),
   github_url: z.string().url("Geçerli URL girin").optional().or(z.literal("")),
   linkedin_url: z.string().url("Geçerli URL girin").optional().or(z.literal("")),
   portfolio_url: z.string().url("Geçerli URL girin").optional().or(z.literal("")),
   location: z.string().optional(),
-  years_of_experience: z.number().min(0).optional().nullable(),
   is_open_to_work: z.boolean(),
 });
 
@@ -42,12 +40,10 @@ export default function DeveloperProfileForm({ profile, onSaved }: Props) {
     defaultValues: {
       title: profile.title,
       bio: profile.bio,
-      skills: profile.skills,
       github_url: profile.github_url,
       linkedin_url: profile.linkedin_url,
       portfolio_url: profile.portfolio_url,
       location: profile.location,
-      years_of_experience: profile.years_of_experience,
       is_open_to_work: profile.is_open_to_work,
     },
   });
@@ -65,7 +61,7 @@ export default function DeveloperProfileForm({ profile, onSaved }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Developer Profile</CardTitle>
+        <CardTitle className="text-base">Geliştirici Profili</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -76,16 +72,7 @@ export default function DeveloperProfileForm({ profile, onSaved }: Props) {
             </div>
             <div className="space-y-1">
               <Label>Lokasyon</Label>
-              <Input placeholder="Turkey" {...register("location")} />
-            </div>
-            <div className="space-y-1">
-              <Label>Deneyim (yıl)</Label>
-              <Input
-                type="number"
-                min={0}
-                placeholder="1"
-                {...register("years_of_experience", { valueAsNumber: true })}
-              />
+              <Input placeholder="İstanbul, Türkiye" {...register("location")} />
             </div>
             <div className="space-y-1">
               <Label>GitHub URL</Label>
@@ -97,16 +84,11 @@ export default function DeveloperProfileForm({ profile, onSaved }: Props) {
               <Input placeholder="https://linkedin.com/in/..." {...register("linkedin_url")} />
               {errors.linkedin_url && <p className="text-xs text-red-500">{errors.linkedin_url.message}</p>}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 sm:col-span-2">
               <Label>Portfolio URL</Label>
               <Input placeholder="https://example.dev" {...register("portfolio_url")} />
               {errors.portfolio_url && <p className="text-xs text-red-500">{errors.portfolio_url.message}</p>}
             </div>
-          </div>
-
-          <div className="space-y-1">
-            <Label>Yetenekler</Label>
-            <Input placeholder="Python, Django, TypeScript, React..." {...register("skills")} />
           </div>
 
           <div className="space-y-1">
@@ -118,7 +100,7 @@ export default function DeveloperProfileForm({ profile, onSaved }: Props) {
             <input
               id="is_open_to_work"
               type="checkbox"
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-border accent-primary"
               {...register("is_open_to_work")}
             />
             <Label htmlFor="is_open_to_work" className="cursor-pointer">

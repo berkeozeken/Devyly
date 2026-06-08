@@ -1,8 +1,16 @@
+from django.db.models import Q
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+_APP_ORDERING = {
+    'newest': '-created_at',
+    'oldest': 'created_at',
+    'status': 'status',
+    'interview_date': 'interview_date',
+}
 
 from apps.notifications.models import Notification
 from apps.notifications.services import create_notification
@@ -28,6 +36,17 @@ class MyApplicationsView(APIView):
         qs = JobApplication.objects.filter(developer=request.user).select_related(
             'job_post', 'job_post__company', 'job_post__recruiter'
         )
+        search = request.query_params.get('search', '').strip()
+        status_filter = request.query_params.get('status', '').strip()
+        ordering = request.query_params.get('ordering', 'newest')
+        if search:
+            qs = qs.filter(
+                Q(job_post__title__icontains=search) |
+                Q(job_post__company__name__icontains=search)
+            )
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        qs = qs.order_by(_APP_ORDERING.get(ordering, '-created_at'))
         return Response(JobApplicationSerializer(qs, many=True).data)
 
 
@@ -41,6 +60,19 @@ class ReceivedApplicationsView(APIView):
         qs = JobApplication.objects.filter(job_post__recruiter=request.user).select_related(
             'developer', 'job_post', 'job_post__company', 'job_post__recruiter'
         )
+        search = request.query_params.get('search', '').strip()
+        status_filter = request.query_params.get('status', '').strip()
+        ordering = request.query_params.get('ordering', 'newest')
+        if search:
+            qs = qs.filter(
+                Q(developer__first_name__icontains=search) |
+                Q(developer__last_name__icontains=search) |
+                Q(developer__email__icontains=search) |
+                Q(job_post__title__icontains=search)
+            )
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        qs = qs.order_by(_APP_ORDERING.get(ordering, '-created_at'))
         return Response(JobApplicationSerializer(qs, many=True).data)
 
 

@@ -45,12 +45,12 @@ function CompaniesContent() {
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-gray-700">Companies</h2>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Companies</h1>
           <Button size="sm" onClick={() => setShowForm((v) => !v)}>
-            <Plus size={16} className="mr-1" />
+            <Plus size={15} className="mr-1.5" />
             {showForm ? "İptal" : "Yeni Şirket"}
           </Button>
         </div>
@@ -65,7 +65,7 @@ function CompaniesContent() {
 
         {/* List */}
         {loading ? (
-          <p className="text-sm text-gray-400">Yükleniyor...</p>
+          <p className="text-sm text-muted-foreground">Yükleniyor...</p>
         ) : (
           <CompanyList companies={companies} onDelete={handleDelete} />
         )}

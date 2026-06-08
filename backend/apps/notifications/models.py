@@ -11,6 +11,7 @@ class Notification(models.Model):
         RESCHEDULE_REQUESTED       = 'RESCHEDULE_REQUESTED',       'Reschedule Requested'
         RESCHEDULE_ACCEPTED        = 'RESCHEDULE_ACCEPTED',        'Reschedule Accepted'
         RESCHEDULE_REJECTED        = 'RESCHEDULE_REJECTED',        'Reschedule Rejected'
+        MESSAGE_RECEIVED           = 'MESSAGE_RECEIVED',           'Message Received'
         GENERAL                    = 'GENERAL',                    'General'
 
     recipient = models.ForeignKey(

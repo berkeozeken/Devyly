@@ -89,7 +89,7 @@ export default function RegisterForm({ role }: Props) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">{config.title}</CardTitle>
@@ -158,15 +158,15 @@ export default function RegisterForm({ role }: Props) {
             </Button>
           </form>
 
-          <div className="mt-4 space-y-2 text-center text-sm text-gray-500">
+          <div className="mt-4 space-y-2 text-center text-sm text-muted-foreground">
             <p>
               Zaten hesabınız var mı?{" "}
-              <Link href="/login" className="text-blue-600 hover:underline">
+              <Link href="/login" className="text-blue-500 hover:underline">
                 Giriş Yap
               </Link>
             </p>
             <p>
-              <Link href={config.switchHref} className="text-gray-400 hover:text-gray-600 hover:underline">
+              <Link href={config.switchHref} className="text-muted-foreground/70 hover:text-foreground hover:underline">
                 {config.switchText}
               </Link>
             </p>

@@ -290,6 +290,43 @@ export interface Notification {
   created_at: string;
 }
 
+export interface Message {
+  id: number;
+  conversation: number;
+  sender: number;
+  sender_name: string;
+  sender_role: string;
+  body: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface ConversationLastMessage {
+  id: number;
+  body: string;
+  sender: number;
+  sender_name: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface Conversation {
+  id: number;
+  other_user: number | null;
+  other_user_name: string;
+  other_user_role: string;
+  other_user_profile_photo?: string | null;
+  other_user_gender?: string | null;
+  job_application?: number | null;
+  job_post?: number | null;
+  job_title?: string | null;
+  last_message?: ConversationLastMessage | null;
+  last_message_at?: string | null;
+  unread_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PublicProfile {
   user: User;
   developer_profile: DeveloperProfile | null;
@@ -306,4 +343,29 @@ export interface EmailLog {
   error_message: string;
   sent_at: string | null;
   created_at: string;
+}
+
+export interface PublicDeveloper {
+  id: number;
+  name: string;
+  role: string;
+  profile_photo: string | null;
+  gender: string | null;
+  title: string;
+  location: string;
+  skills: string;
+  open_to_work: boolean;
+}
+
+export interface PublicRecruiter {
+  id: number;
+  name: string;
+  role: string;
+  profile_photo: string | null;
+  gender: string | null;
+  title: string;
+  company_name: string;
+  industry: string;
+  location: string;
+  is_hiring: boolean;
 }

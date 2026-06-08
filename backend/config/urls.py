@@ -21,6 +21,7 @@ urlpatterns = [
     path('api/interview-reschedule-requests/', include('apps.job_applications.reschedule_urls')),
     path('api/feed-posts/', include('apps.feed_posts.urls')),
     path('api/notifications/', include('apps.notifications.urls')),
+    path('api/conversations/', include('apps.conversations.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 ]

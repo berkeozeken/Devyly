@@ -1,7 +1,9 @@
 from django.urls import path
 
-from .views import PublicUserProfileView
+from .views import PublicDeveloperListView, PublicRecruiterListView, PublicUserProfileView
 
 urlpatterns = [
     path('<int:pk>/public-profile/', PublicUserProfileView.as_view(), name='user-public-profile'),
+    path('developers/', PublicDeveloperListView.as_view(), name='user-developers-list'),
+    path('recruiters/', PublicRecruiterListView.as_view(), name='user-recruiters-list'),
 ]

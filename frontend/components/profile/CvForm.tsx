@@ -30,7 +30,7 @@ interface Props {
   onSaved: (updated: DeveloperProfile) => void;
 }
 
-/* ── Data constants (defined first, used by components below) ─── */
+/* ── Data constants ───────────────────────────────────────────── */
 
 const currentYear = new Date().getFullYear();
 
@@ -77,7 +77,7 @@ const EMPTY_PROJECT: CvProject         = { name: "", description: "", technologi
 const EMPTY_LANGUAGE: CvLanguage       = { language: "", level: "" };
 const EMPTY_CERTIFICATE: CvCertificate = { name: "", issuer: "", year: "", url: "" };
 
-/* ── Normalisers for backward-compat ─────────────────────────── */
+/* ── Normalisers ──────────────────────────────────────────────── */
 
 const normalizeEdu  = (e: CvEducation): CvEducation => ({ is_current: false, ...e });
 const normalizeProj = (p: CvProject):   CvProject   => ({ start_date: "", end_date: "", is_current: false, ...p });
@@ -102,12 +102,12 @@ function CvSection({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">{title}</span>
+        <span className="text-sm font-medium text-foreground">{title}</span>
         {hasItems && (
           <button
             type="button"
             onClick={onAdd}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             + {addLabel}
           </button>
@@ -116,12 +116,12 @@ function CvSection({
       {hasItems ? (
         <div className="space-y-2">{children}</div>
       ) : (
-        <div className="border border-dashed rounded-md px-4 py-3 text-sm text-gray-400 flex items-center justify-between">
+        <div className="border border-dashed border-border rounded-md px-4 py-3 text-sm text-muted-foreground flex items-center justify-between">
           <span>{emptyText}</span>
           <button
             type="button"
             onClick={onAdd}
-            className="text-xs text-blue-500 hover:text-blue-700 font-medium ml-3 shrink-0"
+            className="text-xs text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium ml-3 shrink-0"
           >
             + {addLabel}
           </button>
@@ -174,7 +174,6 @@ function MonthPickerField({ value, onChange, disabled }: MonthPickerFieldProps) 
     () => selYear ? parseInt(selYear, 10) : currentYear,
   );
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
     const onMouseDown = (e: MouseEvent) => {
@@ -212,31 +211,31 @@ function MonthPickerField({ value, onChange, disabled }: MonthPickerFieldProps) 
             setOpen(true);
           }
         }}
-        className="h-8 w-full rounded-md border border-gray-300 bg-white px-3 text-sm flex items-center justify-between gap-2 text-left disabled:opacity-50 disabled:cursor-not-allowed hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+        className="h-8 w-full rounded-md border border-border bg-background px-3 text-sm flex items-center justify-between gap-2 text-left disabled:opacity-50 disabled:cursor-not-allowed hover:border-border transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
       >
-        <span className={displayText ? "text-gray-900" : "text-gray-400 text-xs"}>
+        <span className={displayText ? "text-foreground" : "text-muted-foreground text-xs"}>
           {displayText ?? "Tarih seçin"}
         </span>
-        <CalendarIcon className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+        <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
       </button>
 
       {open && !disabled && (
-        <div className="absolute top-full mt-1 left-0 z-50 bg-white border border-gray-200 rounded-md shadow-lg p-3 w-52">
+        <div className="absolute top-full mt-1 left-0 z-50 bg-card border border-border rounded-md shadow-lg p-3 w-52">
 
           {/* Year navigation */}
           <div className="flex items-center justify-between mb-2">
             <button
               type="button"
               onClick={() => setPickerYear(y => Math.max(1950, y - 1))}
-              className="h-6 w-6 flex items-center justify-center rounded text-gray-500 hover:bg-gray-100 text-lg leading-none"
+              className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:bg-muted text-lg leading-none"
             >
               ‹
             </button>
-            <span className="text-sm font-semibold text-gray-800">{pickerYear}</span>
+            <span className="text-sm font-semibold text-foreground">{pickerYear}</span>
             <button
               type="button"
               onClick={() => setPickerYear(y => Math.min(currentYear + 10, y + 1))}
-              className="h-6 w-6 flex items-center justify-center rounded text-gray-500 hover:bg-gray-100 text-lg leading-none"
+              className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:bg-muted text-lg leading-none"
             >
               ›
             </button>
@@ -253,8 +252,8 @@ function MonthPickerField({ value, onChange, disabled }: MonthPickerFieldProps) 
                   onClick={() => handleMonthClick(m.value)}
                   className={`text-xs py-1.5 rounded transition-colors ${
                     isSelected
-                      ? "bg-blue-100 text-blue-700 font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold"
+                      : "text-foreground hover:bg-muted"
                   }`}
                 >
                   {m.label}
@@ -268,7 +267,7 @@ function MonthPickerField({ value, onChange, disabled }: MonthPickerFieldProps) 
             <button
               type="button"
               onClick={() => { onChange(""); setOpen(false); }}
-              className="mt-2 w-full text-xs text-center text-gray-400 hover:text-gray-600 py-0.5"
+              className="mt-2 w-full text-xs text-center text-muted-foreground hover:text-foreground py-0.5"
             >
               Temizle
             </button>
@@ -367,7 +366,7 @@ export default function CvForm({ profile, onSaved }: Props) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base">CV İçeriği</CardTitle>
-        <p className="text-xs text-gray-400 mt-0.5">
+        <p className="text-xs text-muted-foreground mt-0.5">
           CV oluştururken kullanılacak eğitim, deneyim, proje ve diğer bilgileri buradan yönetebilirsiniz.
         </p>
       </CardHeader>
@@ -383,29 +382,29 @@ export default function CvForm({ profile, onSaved }: Props) {
           hasItems={education.length > 0}
         >
           {education.map((edu, i) => (
-            <div key={i} className="bg-gray-50 rounded-md p-3 space-y-2">
+            <div key={i} className="bg-muted/40 rounded-md p-3 space-y-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">Okul</Label>
+                  <Label className="text-xs text-muted-foreground">Okul</Label>
                   <Input className="h-8 text-sm" placeholder="Üniversite / okul adı"
                     value={edu.school}
                     onChange={e => updateEdu(i, { school: e.target.value })} />
                 </div>
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">Bölüm / Derece</Label>
+                  <Label className="text-xs text-muted-foreground">Bölüm / Derece</Label>
                   <Input className="h-8 text-sm" placeholder="Bölüm veya derece"
                     value={edu.degree}
                     onChange={e => updateEdu(i, { degree: e.target.value })} />
                 </div>
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">Başlangıç</Label>
+                  <Label className="text-xs text-muted-foreground">Başlangıç</Label>
                   <MonthPickerField
                     value={edu.start_year}
                     onChange={v => updateEdu(i, { start_year: v })}
                   />
                 </div>
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">Bitiş</Label>
+                  <Label className="text-xs text-muted-foreground">Bitiş</Label>
                   <MonthPickerField
                     value={edu.end_year}
                     disabled={!!edu.is_current}
@@ -417,7 +416,7 @@ export default function CvForm({ profile, onSaved }: Props) {
                 <input
                   type="checkbox"
                   id={`edu_current_${i}`}
-                  className="h-3.5 w-3.5 rounded border-gray-300"
+                  className="h-3.5 w-3.5 rounded border-border accent-primary"
                   checked={!!edu.is_current}
                   onChange={e =>
                     updateEdu(i, {
@@ -426,12 +425,12 @@ export default function CvForm({ profile, onSaved }: Props) {
                     })
                   }
                 />
-                <Label htmlFor={`edu_current_${i}`} className="text-xs text-gray-500 cursor-pointer">
+                <Label htmlFor={`edu_current_${i}`} className="text-xs text-muted-foreground cursor-pointer">
                   Hâlâ okuyorum
                 </Label>
               </div>
               <div className="space-y-0.5">
-                <Label className="text-xs text-gray-500">Açıklama</Label>
+                <Label className="text-xs text-muted-foreground">Açıklama</Label>
                 <Textarea className="text-sm" rows={2} placeholder="Eğitimle ilgili kısa açıklama..."
                   value={edu.description}
                   onChange={e => updateEdu(i, { description: e.target.value })} />
@@ -443,7 +442,7 @@ export default function CvForm({ profile, onSaved }: Props) {
           ))}
         </CvSection>
 
-        <hr className="border-gray-100" />
+        <hr className="border-border" />
 
         {/* ── Work Experience ── */}
         <CvSection
@@ -454,29 +453,29 @@ export default function CvForm({ profile, onSaved }: Props) {
           hasItems={workExperience.length > 0}
         >
           {workExperience.map((exp, i) => (
-            <div key={i} className="bg-gray-50 rounded-md p-3 space-y-2">
+            <div key={i} className="bg-muted/40 rounded-md p-3 space-y-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">Şirket</Label>
+                  <Label className="text-xs text-muted-foreground">Şirket</Label>
                   <Input className="h-8 text-sm" placeholder="Şirket adı"
                     value={exp.company}
                     onChange={e => updateWork(i, { company: e.target.value })} />
                 </div>
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">Pozisyon</Label>
+                  <Label className="text-xs text-muted-foreground">Pozisyon</Label>
                   <Input className="h-8 text-sm" placeholder="Pozisyon adı"
                     value={exp.position}
                     onChange={e => updateWork(i, { position: e.target.value })} />
                 </div>
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">Başlangıç</Label>
+                  <Label className="text-xs text-muted-foreground">Başlangıç</Label>
                   <MonthPickerField
                     value={exp.start_date}
                     onChange={v => updateWork(i, { start_date: v })}
                   />
                 </div>
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">Bitiş</Label>
+                  <Label className="text-xs text-muted-foreground">Bitiş</Label>
                   <MonthPickerField
                     value={exp.end_date}
                     disabled={exp.is_current}
@@ -488,7 +487,7 @@ export default function CvForm({ profile, onSaved }: Props) {
                 <input
                   type="checkbox"
                   id={`work_current_${i}`}
-                  className="h-3.5 w-3.5 rounded border-gray-300"
+                  className="h-3.5 w-3.5 rounded border-border accent-primary"
                   checked={exp.is_current}
                   onChange={e =>
                     updateWork(i, {
@@ -497,12 +496,12 @@ export default function CvForm({ profile, onSaved }: Props) {
                     })
                   }
                 />
-                <Label htmlFor={`work_current_${i}`} className="text-xs text-gray-500 cursor-pointer">
+                <Label htmlFor={`work_current_${i}`} className="text-xs text-muted-foreground cursor-pointer">
                   Hâlâ burada çalışıyorum
                 </Label>
               </div>
               <div className="space-y-0.5">
-                <Label className="text-xs text-gray-500">Açıklama</Label>
+                <Label className="text-xs text-muted-foreground">Açıklama</Label>
                 <Textarea className="text-sm" rows={2}
                   placeholder="Sorumluluklarınızı ve yaptığınız işleri yazın..."
                   value={exp.description}
@@ -515,7 +514,7 @@ export default function CvForm({ profile, onSaved }: Props) {
           ))}
         </CvSection>
 
-        <hr className="border-gray-100" />
+        <hr className="border-border" />
 
         {/* ── Projects ── */}
         <CvSection
@@ -526,29 +525,29 @@ export default function CvForm({ profile, onSaved }: Props) {
           hasItems={projects.length > 0}
         >
           {projects.map((proj, i) => (
-            <div key={i} className="bg-gray-50 rounded-md p-3 space-y-2">
+            <div key={i} className="bg-muted/40 rounded-md p-3 space-y-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">Proje Adı</Label>
+                  <Label className="text-xs text-muted-foreground">Proje Adı</Label>
                   <Input className="h-8 text-sm" placeholder="Proje adı"
                     value={proj.name}
                     onChange={e => updateProj(i, { name: e.target.value })} />
                 </div>
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">Teknolojiler</Label>
+                  <Label className="text-xs text-muted-foreground">Teknolojiler</Label>
                   <Input className="h-8 text-sm" placeholder="Kullanılan teknolojiler"
                     value={proj.technologies}
                     onChange={e => updateProj(i, { technologies: e.target.value })} />
                 </div>
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">Başlangıç</Label>
+                  <Label className="text-xs text-muted-foreground">Başlangıç</Label>
                   <MonthPickerField
                     value={proj.start_date ?? ""}
                     onChange={v => updateProj(i, { start_date: v })}
                   />
                 </div>
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">Bitiş</Label>
+                  <Label className="text-xs text-muted-foreground">Bitiş</Label>
                   <MonthPickerField
                     value={proj.end_date ?? ""}
                     disabled={!!proj.is_current}
@@ -560,7 +559,7 @@ export default function CvForm({ profile, onSaved }: Props) {
                 <input
                   type="checkbox"
                   id={`proj_current_${i}`}
-                  className="h-3.5 w-3.5 rounded border-gray-300"
+                  className="h-3.5 w-3.5 rounded border-border accent-primary"
                   checked={!!proj.is_current}
                   onChange={e =>
                     updateProj(i, {
@@ -569,19 +568,19 @@ export default function CvForm({ profile, onSaved }: Props) {
                     })
                   }
                 />
-                <Label htmlFor={`proj_current_${i}`} className="text-xs text-gray-500 cursor-pointer">
+                <Label htmlFor={`proj_current_${i}`} className="text-xs text-muted-foreground cursor-pointer">
                   Hâlâ devam ediyor
                 </Label>
               </div>
               <div className="space-y-0.5">
-                <Label className="text-xs text-gray-500">URL</Label>
+                <Label className="text-xs text-muted-foreground">URL</Label>
                 <Input type="url" className="h-8 text-sm"
                   placeholder="Proje veya GitHub bağlantısı"
                   value={proj.url}
                   onChange={e => updateProj(i, { url: e.target.value })} />
               </div>
               <div className="space-y-0.5">
-                <Label className="text-xs text-gray-500">Açıklama</Label>
+                <Label className="text-xs text-muted-foreground">Açıklama</Label>
                 <Textarea className="text-sm" rows={2} placeholder="Projeyi kısaca açıklayın..."
                   value={proj.description}
                   onChange={e => updateProj(i, { description: e.target.value })} />
@@ -593,7 +592,7 @@ export default function CvForm({ profile, onSaved }: Props) {
           ))}
         </CvSection>
 
-        <hr className="border-gray-100" />
+        <hr className="border-border" />
 
         {/* ── Languages ── */}
         <CvSection
@@ -604,16 +603,16 @@ export default function CvForm({ profile, onSaved }: Props) {
           hasItems={languages.length > 0}
         >
           {languages.map((lang, i) => (
-            <div key={i} className="bg-gray-50 rounded-md p-3">
+            <div key={i} className="bg-muted/40 rounded-md p-3">
               <div className="flex items-end gap-2">
                 <div className="space-y-0.5 flex-1">
-                  <Label className="text-xs text-gray-500">Dil</Label>
+                  <Label className="text-xs text-muted-foreground">Dil</Label>
                   <Input className="h-8 text-sm" placeholder="Dil"
                     value={lang.language}
                     onChange={e => updateLang(i, { language: e.target.value })} />
                 </div>
                 <div className="space-y-0.5 w-40">
-                  <Label className="text-xs text-gray-500">Seviye</Label>
+                  <Label className="text-xs text-muted-foreground">Seviye</Label>
                   <Select
                     value={lang.level}
                     onValueChange={v => updateLang(i, { level: v ?? "" })}
@@ -638,7 +637,7 @@ export default function CvForm({ profile, onSaved }: Props) {
           ))}
         </CvSection>
 
-        <hr className="border-gray-100" />
+        <hr className="border-border" />
 
         {/* ── Certificates ── */}
         <CvSection
@@ -649,29 +648,29 @@ export default function CvForm({ profile, onSaved }: Props) {
           hasItems={certificates.length > 0}
         >
           {certificates.map((cert, i) => (
-            <div key={i} className="bg-gray-50 rounded-md p-3 space-y-2">
+            <div key={i} className="bg-muted/40 rounded-md p-3 space-y-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">Sertifika Adı</Label>
+                  <Label className="text-xs text-muted-foreground">Sertifika Adı</Label>
                   <Input className="h-8 text-sm" placeholder="Sertifika adı"
                     value={cert.name}
                     onChange={e => updateCert(i, { name: e.target.value })} />
                 </div>
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">Veren Kurum</Label>
+                  <Label className="text-xs text-muted-foreground">Veren Kurum</Label>
                   <Input className="h-8 text-sm" placeholder="Kurum adı"
                     value={cert.issuer}
                     onChange={e => updateCert(i, { issuer: e.target.value })} />
                 </div>
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">Tarih</Label>
+                  <Label className="text-xs text-muted-foreground">Tarih</Label>
                   <MonthPickerField
                     value={cert.year}
                     onChange={v => updateCert(i, { year: v })}
                   />
                 </div>
                 <div className="space-y-0.5">
-                  <Label className="text-xs text-gray-500">URL</Label>
+                  <Label className="text-xs text-muted-foreground">URL</Label>
                   <Input type="url" className="h-8 text-sm" placeholder="Sertifika bağlantısı"
                     value={cert.url}
                     onChange={e => updateCert(i, { url: e.target.value })} />
@@ -684,17 +683,14 @@ export default function CvForm({ profile, onSaved }: Props) {
           ))}
         </CvSection>
 
-        <hr className="border-gray-100" />
+        <hr className="border-border" />
 
         {/* ── CV Preferences ── */}
-        <p className="text-xs text-gray-400 italic">
-          CV önizleme ve PDF indirme bir sonraki adımda eklenecek.
-        </p>
         <div className="space-y-3">
-          <span className="text-sm font-medium text-gray-700">CV Tercihleri</span>
+          <span className="text-sm font-medium text-foreground">CV Tercihleri</span>
           <div className="flex flex-col sm:flex-row sm:items-end gap-4">
             <div className="space-y-0.5">
-              <Label className="text-xs text-gray-500">CV Dili</Label>
+              <Label className="text-xs text-muted-foreground">CV Dili</Label>
               <Select value={cvLanguage} onValueChange={v => setCvLanguage(v ?? "en")}>
                 <SelectTrigger className="w-40 h-8 text-sm">
                   <SelectValue />
@@ -710,11 +706,11 @@ export default function CvForm({ profile, onSaved }: Props) {
               <input
                 id="include_photo_in_cv"
                 type="checkbox"
-                className="h-4 w-4 rounded border-gray-300"
+                className="h-4 w-4 rounded border-border accent-primary"
                 checked={includePhoto}
                 onChange={e => setIncludePhoto(e.target.checked)}
               />
-              <Label htmlFor="include_photo_in_cv" className="text-sm cursor-pointer text-gray-600">
+              <Label htmlFor="include_photo_in_cv" className="text-sm cursor-pointer text-muted-foreground">
                 Profil fotoğrafımı CV&apos;ye ekle
               </Label>
             </div>
@@ -722,7 +718,7 @@ export default function CvForm({ profile, onSaved }: Props) {
         </div>
 
         {/* ── Save ── */}
-        <div className="flex justify-end pt-2 border-t border-gray-100">
+        <div className="flex justify-end pt-2 border-t border-border">
           <Button onClick={handleSave} disabled={saving} size="sm" className="mt-3">
             {saving ? "Kaydediliyor..." : "CV Bilgilerini Kaydet"}
           </Button>

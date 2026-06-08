@@ -285,11 +285,11 @@ export default function FeedPage() {
   if (!ready) return null;
 
   const body = (
-    <div className="max-w-2xl mx-auto px-6 py-8 space-y-5">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-5">
 
       {/* Compose — authenticated only */}
       {auth && (
-        <div className="bg-white border rounded-lg p-4 space-y-3">
+        <div className="bg-card border border-border rounded-2xl p-5 space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
           <Textarea
             rows={3}
             placeholder="Bir şeyler paylaşın..."
@@ -301,7 +301,7 @@ export default function FeedPage() {
               ref={fileInputRef}
               type="file"
               accept="image/png,image/jpeg"
-              className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
+              className="text-xs text-muted-foreground file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-muted file:text-muted-foreground hover:file:bg-muted/80 cursor-pointer"
               onChange={handleImageChange}
             />
             <Button
@@ -316,9 +316,9 @@ export default function FeedPage() {
 
       {/* Post list */}
       {loadingPosts ? (
-        <p className="text-sm text-gray-400">Yükleniyor...</p>
+        <p className="text-sm text-muted-foreground">Yükleniyor...</p>
       ) : posts.length === 0 ? (
-        <p className="text-sm text-gray-400">Henüz gönderi yok.</p>
+        <p className="text-sm text-muted-foreground">Henüz gönderi yok.</p>
       ) : (
         <div className="space-y-4">
           {posts.map((post) => {
@@ -327,7 +327,7 @@ export default function FeedPage() {
             const badgeClass = ROLE_BADGE[post.author_role] ?? "bg-gray-100 text-gray-500";
 
             return (
-              <div key={post.id} className="bg-white border rounded-lg p-4 space-y-3">
+              <div key={post.id} className="bg-card border border-border rounded-2xl p-5 space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.05)] transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(15,23,42,0.07)]">
                 {/* Header */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
@@ -340,7 +340,7 @@ export default function FeedPage() {
                     </Link>
                     <Link
                       href={`/users/${post.author}`}
-                      className="text-sm font-medium text-gray-800 truncate hover:text-blue-600 hover:underline"
+                      className="text-sm font-medium text-foreground truncate hover:text-blue-500 hover:underline"
                     >
                       {post.author_name}
                     </Link>
@@ -348,7 +348,7 @@ export default function FeedPage() {
                       {post.author_role}
                     </span>
                   </div>
-                  <span className="text-xs text-gray-400 shrink-0">
+                  <span className="text-xs text-muted-foreground shrink-0">
                     {new Date(post.created_at).toLocaleString("tr-TR")}
                   </span>
                 </div>
@@ -399,7 +399,7 @@ export default function FeedPage() {
                       ref={editFileInputRef}
                       type="file"
                       accept="image/png,image/jpeg"
-                      className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
+                      className="text-xs text-muted-foreground file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-muted file:text-muted-foreground hover:file:bg-muted/80 cursor-pointer"
                       onChange={handleEditImageChange}
                     />
 
@@ -411,7 +411,7 @@ export default function FeedPage() {
                 ) : (
                   <>
                     {post.content && (
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{post.content}</p>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{post.content}</p>
                     )}
                     {post.image && (
                       <img

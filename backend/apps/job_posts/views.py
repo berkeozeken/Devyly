@@ -1,4 +1,5 @@
 from django.db import IntegrityError
+from django.db.models import Q
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
@@ -14,6 +15,32 @@ from apps.users.models import User
 
 from .models import JobPost
 from .serializers import JobPostSerializer
+
+_JP_ORDERING = {
+    'newest': '-created_at',
+    'oldest': 'created_at',
+    'title_asc': 'title',
+    'title_desc': '-title',
+}
+
+
+def _filter_jobposts(qs, params):
+    search = params.get('search', '').strip()
+    location = params.get('location', '').strip()
+    work_type = params.get('work_type', '').strip()
+    ordering = params.get('ordering', 'newest')
+    if search:
+        qs = qs.filter(
+            Q(title__icontains=search) |
+            Q(description__icontains=search) |
+            Q(requirements__icontains=search) |
+            Q(company__name__icontains=search)
+        )
+    if location:
+        qs = qs.filter(location__icontains=location)
+    if work_type:
+        qs = qs.filter(work_type=work_type)
+    return qs.order_by(_JP_ORDERING.get(ordering, '-created_at'))
 
 
 class IsRecruiter(BasePermission):
@@ -34,18 +61,34 @@ class IsRecruiter(BasePermission):
         )
 
 
+class IsDeveloper(BasePermission):
+    message = 'Bu işlem sadece Developer hesapları içindir.'
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == User.Role.DEVELOPER
+        )
+
+
 class JobPostViewSet(ModelViewSet):
     serializer_class = JobPostSerializer
 
     def get_permissions(self):
         if self.action in ('list', 'retrieve'):
             return []
-        if self.action in ('apply', 'my_posts'):
-            return [IsAuthenticated()]
+        if self.action == 'apply':
+            return [IsAuthenticated(), IsDeveloper()]
+        if self.action == 'my_posts':
+            return [IsAuthenticated(), IsRecruiter()]
         return [IsAuthenticated(), IsRecruiter()]
 
     def get_queryset(self):
-        return JobPost.objects.select_related('company', 'recruiter').filter(is_active=True)
+        qs = JobPost.objects.select_related('company', 'recruiter').filter(is_active=True)
+        if self.action == 'list':
+            qs = _filter_jobposts(qs, self.request.query_params)
+        return qs
 
     def perform_create(self, serializer):
         serializer.save(recruiter=self.request.user)
@@ -55,8 +98,8 @@ class JobPostViewSet(ModelViewSet):
         if request.user.role != User.Role.RECRUITER:
             return Response({'detail': 'Bu endpoint sadece Recruiter hesapları içindir.'}, status=403)
         qs = JobPost.objects.filter(recruiter=request.user).select_related('company')
-        serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+        qs = _filter_jobposts(qs, request.query_params)
+        return Response(self.get_serializer(qs, many=True).data)
 
     @extend_schema(request=ApplySerializer, responses={201: JobApplicationSerializer})
     @action(detail=True, methods=['post'], url_path='apply', permission_classes=[IsAuthenticated])
