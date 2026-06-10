@@ -71,9 +71,9 @@
   --input: #e2e8f0;
   --ring: #94a3b8;
   --radius: 0.75rem;
-  --brand: #e9f505;
-  --brand-soft: rgba(233, 245, 5, 0.10);
-  --brand-border: rgba(233, 245, 5, 0.35);
+  --brand: #0891b2;
+  --brand-soft: rgba(8, 145, 178, 0.10);
+  --brand-border: rgba(8, 145, 178, 0.35);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -109,9 +109,9 @@
   --border-strong: #334155;
   --input: #243041;
   --ring: #475569;
-  --brand: #e9f505;
-  --brand-soft: rgba(233, 245, 5, 0.05);
-  --brand-border: rgba(233, 245, 5, 0.28);
+  --brand: #22d3ee;
+  --brand-soft: rgba(34, 211, 238, 0.05);
+  --brand-border: rgba(34, 211, 238, 0.28);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);

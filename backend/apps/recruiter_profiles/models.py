@@ -15,7 +15,7 @@ class RecruiterProfile(models.Model):
     position_title = models.CharField(max_length=150, blank=True)
     bio = models.TextField(blank=True)
     linkedin_url = models.URLField(blank=True)
-    is_hiring = models.BooleanField(default=True)
+    is_hiring = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

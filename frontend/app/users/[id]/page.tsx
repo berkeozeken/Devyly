@@ -3,12 +3,36 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { toast } from "sonner";
+import { Heart, MessageCircle, Repeat2 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import PublicLayout from "@/components/layout/PublicLayout";
 import api from "@/lib/api";
 import { getUser, isAuthenticated } from "@/lib/auth";
-import type { CvCertificate, CvEducation, CvLanguage, CvProject, CvWorkExperience, PublicProfile, User } from "@/types";
+import type { CvCertificate, CvEducation, CvLanguage, CvProject, CvWorkExperience, FeedPost, ProfileTimelineItem, PublicProfile, User } from "@/types";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
+const MEDIA_BASE_PROFILE = API_URL.replace(/\/api\/?$/, "");
+
+function getProfileImgUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  return `${MEDIA_BASE_PROFILE}${path}`;
+}
+
+function relativeTime(dateStr: string): string {
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (diff < 60) return "Az önce";
+  if (diff < 3600) return `${Math.floor(diff / 60)} dk önce`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} sa önce`;
+  return new Date(dateStr).toLocaleDateString("tr-TR");
+}
+
+const ROLE_BADGE_PROFILE: Record<string, string> = {
+  DEVELOPER: "bg-blue-100 text-blue-600",
+  RECRUITER: "bg-purple-100 text-purple-600",
+};
 
 /* ── Date helpers ─────────────────────────────────────────────── */
 
@@ -88,14 +112,134 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+/* ── Profile Feed Section ─────────────────────────────────────── */
+
+interface ProfileFeedProps {
+  timelineItems: ProfileTimelineItem[];
+  timelineLoading: boolean;
+  auth: boolean;
+  currentUser: User | null;
+  onLike: (post: FeedPost) => void;
+  onRepost: (post: FeedPost) => void;
+}
+
+function ProfileFeedSection({ timelineItems, timelineLoading, auth, currentUser, onLike, onRepost }: ProfileFeedProps) {
+  if (!timelineLoading && timelineItems.length === 0) return null;
+
+  return (
+    <Section title="Paylaşımlar">
+      {timelineLoading ? (
+        <p className="text-xs text-muted-foreground/70">Yükleniyor...</p>
+      ) : (
+        <div className="space-y-3">
+          {timelineItems.map((item) => {
+            const post = item.post;
+            const isLiked = post.is_liked_by_me;
+            const isReposted = post.is_reposted_by_me;
+            const badgeCls = ROLE_BADGE_PROFILE[post.author_role] ?? "bg-gray-100 text-gray-500";
+            const imgUrl = getProfileImgUrl(post.image);
+
+            return (
+              <div
+                key={`${item.type}-${item.repost_id ?? post.id}`}
+                className="rounded-xl border border-border bg-background/50 p-3 space-y-2"
+              >
+                {item.type === "repost" && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <Repeat2 size={11} />
+                    <span>yeniden paylaştı</span>
+                    {item.repost_at && (
+                      <span className="ml-auto">{relativeTime(item.repost_at)}</span>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <Link href={`/users/${post.author}`} className="shrink-0">
+                    <Avatar
+                      name={post.author_name}
+                      photo={getProfileImgUrl(post.author_profile_photo)}
+                      gender={post.author_gender}
+                      size="sm"
+                    />
+                  </Link>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Link
+                        href={`/users/${post.author}`}
+                        className="text-xs font-semibold text-foreground hover:text-blue-500 hover:underline truncate"
+                      >
+                        {post.author_name}
+                      </Link>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${badgeCls}`}>
+                        {post.author_role}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground/70">{relativeTime(post.created_at)}</span>
+                  </div>
+                </div>
+
+                {post.content && (
+                  <p className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">{post.content}</p>
+                )}
+                {imgUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={imgUrl} alt="Gönderi görseli" className="rounded-lg border w-full object-cover max-h-48" />
+                )}
+
+                <div className="flex items-center gap-0 pt-1.5 border-t border-border">
+                  <button
+                    onClick={() => {
+                      if (!auth) { toast.error("Beğenmek için giriş yapmalısınız."); return; }
+                      onLike(post);
+                    }}
+                    className={[
+                      "flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-medium transition-colors",
+                      isLiked ? "text-red-500 hover:text-red-600" : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                    ].join(" ")}
+                  >
+                    <Heart size={11} className={isLiked ? "fill-red-500" : ""} />
+                    <span>{post.likes_count}</span>
+                  </button>
+
+                  <span className="flex items-center gap-1 h-7 px-2.5 text-[11px] font-medium text-muted-foreground">
+                    <MessageCircle size={11} />
+                    <span>{post.comments_count}</span>
+                  </span>
+
+                  <button
+                    onClick={() => {
+                      if (!auth) { toast.error("Repost için giriş yapmalısınız."); return; }
+                      onRepost(post);
+                    }}
+                    className={[
+                      "flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-medium transition-colors",
+                      isReposted ? "text-green-500 hover:text-green-600" : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                    ].join(" ")}
+                  >
+                    <Repeat2 size={11} />
+                    <span>{post.reposts_count}</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Section>
+  );
+}
+
 /* ── Developer profile view ───────────────────────────────────── */
 
 function DeveloperProfileView({
   publicProfile,
   currentUserId,
+  feedProps,
 }: {
   publicProfile: PublicProfile;
   currentUserId: number | null;
+  feedProps: ProfileFeedProps;
 }) {
   const { user, developer_profile: dp } = publicProfile;
   const fullName = `${user.first_name} ${user.last_name}`.trim();
@@ -291,6 +435,8 @@ function DeveloperProfileView({
           Bu kullanıcı henüz profil detaylarını doldurmamış.
         </p>
       )}
+
+      <ProfileFeedSection {...feedProps} />
     </div>
   );
 }
@@ -300,9 +446,11 @@ function DeveloperProfileView({
 function RecruiterProfileView({
   publicProfile,
   currentUserId,
+  feedProps,
 }: {
   publicProfile: PublicProfile;
   currentUserId: number | null;
+  feedProps: ProfileFeedProps;
 }) {
   const { user, recruiter_profile: rp } = publicProfile;
   const fullName = `${user.first_name} ${user.last_name}`.trim();
@@ -334,7 +482,7 @@ function RecruiterProfileView({
             </span>
             {rp?.is_hiring && (
               <span className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 px-2 py-0.5 rounded-full font-medium">
-                İşe Alıyor
+                İşe Alım Yapıyor
               </span>
             )}
           </div>
@@ -401,6 +549,8 @@ function RecruiterProfileView({
           Bu kullanıcı henüz şirket/profil detaylarını doldurmamış.
         </p>
       )}
+
+      <ProfileFeedSection {...feedProps} />
     </div>
   );
 }
@@ -417,6 +567,8 @@ export default function PublicProfilePage() {
   const [publicProfile, setPublicProfile] = useState<PublicProfile | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [profilePosts, setProfilePosts] = useState<ProfileTimelineItem[]>([]);
+  const [postsLoading, setPostsLoading] = useState(true);
 
   useEffect(() => {
     if (!userId) return;
@@ -433,7 +585,76 @@ export default function PublicProfilePage() {
         if (status === 404) setNotFound(true);
       })
       .finally(() => setLoading(false));
+
+    api
+      .get<ProfileTimelineItem[]>(`/users/${userId}/posts/`)
+      .then((res) => setProfilePosts(res.data))
+      .catch(() => {})
+      .finally(() => setPostsLoading(false));
   }, [userId]);
+
+  const handleProfileLike = async (post: FeedPost) => {
+    const wasLiked = post.is_liked_by_me;
+    const prevCount = post.likes_count;
+    setProfilePosts((prev) => prev.map((item) =>
+      item.post.id === post.id
+        ? { ...item, post: { ...item.post, is_liked_by_me: !wasLiked, likes_count: wasLiked ? prevCount - 1 : prevCount + 1 } }
+        : item
+    ));
+    try {
+      const res = await api.post<{ likes_count: number; is_liked_by_me: boolean }>(
+        `/feed-posts/${post.id}/like/`
+      );
+      setProfilePosts((prev) => prev.map((item) =>
+        item.post.id === post.id
+          ? { ...item, post: { ...item.post, likes_count: res.data.likes_count, is_liked_by_me: res.data.is_liked_by_me } }
+          : item
+      ));
+    } catch {
+      setProfilePosts((prev) => prev.map((item) =>
+        item.post.id === post.id
+          ? { ...item, post: { ...item.post, is_liked_by_me: wasLiked, likes_count: prevCount } }
+          : item
+      ));
+      toast.error("Beğeni işlemi başarısız.");
+    }
+  };
+
+  const handleProfileRepost = async (post: FeedPost) => {
+    const wasReposted = post.is_reposted_by_me;
+    const prevCount = post.reposts_count;
+    setProfilePosts((prev) => prev.map((item) =>
+      item.post.id === post.id
+        ? { ...item, post: { ...item.post, is_reposted_by_me: !wasReposted, reposts_count: wasReposted ? prevCount - 1 : prevCount + 1 } }
+        : item
+    ));
+    try {
+      const res = await api.post<{ reposts_count: number; is_reposted_by_me: boolean }>(
+        `/feed-posts/${post.id}/repost/`
+      );
+      setProfilePosts((prev) => prev.map((item) =>
+        item.post.id === post.id
+          ? { ...item, post: { ...item.post, reposts_count: res.data.reposts_count, is_reposted_by_me: res.data.is_reposted_by_me } }
+          : item
+      ));
+    } catch {
+      setProfilePosts((prev) => prev.map((item) =>
+        item.post.id === post.id
+          ? { ...item, post: { ...item.post, is_reposted_by_me: wasReposted, reposts_count: prevCount } }
+          : item
+      ));
+      toast.error("Repost işlemi başarısız.");
+    }
+  };
+
+  const feedProps: ProfileFeedProps = {
+    timelineItems: profilePosts,
+    timelineLoading: postsLoading,
+    auth,
+    currentUser,
+    onLike: handleProfileLike,
+    onRepost: handleProfileRepost,
+  };
 
   if (!ready && !userId) return null;
 
@@ -451,11 +672,13 @@ export default function PublicProfilePage() {
         <DeveloperProfileView
           publicProfile={publicProfile}
           currentUserId={currentUser?.id ?? null}
+          feedProps={feedProps}
         />
       ) : (
         <RecruiterProfileView
           publicProfile={publicProfile}
           currentUserId={currentUser?.id ?? null}
+          feedProps={feedProps}
         />
       )}
     </div>

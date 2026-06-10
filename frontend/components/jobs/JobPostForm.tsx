@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -39,6 +40,7 @@ interface Props {
 }
 
 export default function JobPostForm({ companies, onSuccess, onCancel }: Props) {
+  const router = useRouter();
   const {
     register,
     control,
@@ -56,8 +58,17 @@ export default function JobPostForm({ companies, onSuccess, onCancel }: Props) {
       toast.success("İlan oluşturuldu.");
       reset();
       onSuccess(res.data);
-    } catch {
-      toast.error("İlan oluşturulamadı.");
+    } catch (err: unknown) {
+      const httpStatus = (err as { response?: { status?: number } })?.response?.status;
+      const msg =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || "";
+      if (httpStatus === 403 && msg.includes("telefon")) {
+        toast.error(msg, {
+          action: { label: "Telefonumu Doğrula", onClick: () => router.push("/settings") },
+        });
+      } else {
+        toast.error(msg || "İlan oluşturulamadı.");
+      }
     }
   };
 

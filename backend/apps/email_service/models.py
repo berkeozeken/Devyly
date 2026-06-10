@@ -6,8 +6,10 @@ class EmailLog(models.Model):
     class EmailType(models.TextChoices):
         WELCOME = 'WELCOME', 'Welcome'
         PASSWORD_RESET = 'PASSWORD_RESET', 'Password Reset'
+        EMAIL_VERIFICATION = 'EMAIL_VERIFICATION', 'Email Verification'
         INTERVIEW_REMINDER = 'INTERVIEW_REMINDER', 'Interview Reminder'
         APPLICATION_FOLLOW_UP = 'APPLICATION_FOLLOW_UP', 'Application Follow Up'
+        APPLICATION_STATUS_CHANGED = 'APPLICATION_STATUS_CHANGED', 'Application Status Changed'
 
     class EmailStatus(models.TextChoices):
         PENDING = 'PENDING', 'Pending'

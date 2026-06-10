@@ -46,6 +46,13 @@ class Message(models.Model):
     )
     body = models.TextField()
     is_read = models.BooleanField(default=False)
+    shared_post = models.ForeignKey(
+        'feed_posts.FeedPost',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='dm_shares',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

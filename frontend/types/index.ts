@@ -9,6 +9,9 @@ export interface User {
   profile_photo: string | null;
   gender: string | null;
   is_active: boolean;
+  is_email_verified: boolean;
+  phone_number: string | null;
+  is_phone_verified: boolean;
   date_joined: string;
 }
 
@@ -273,8 +276,33 @@ export interface FeedPost {
   content: string;
   image: string | null;
   is_active: boolean;
+  likes_count: number;
+  is_liked_by_me: boolean;
+  comments_count: number;
+  reposts_count: number;
+  is_reposted_by_me: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface PostComment {
+  id: number;
+  user: number;
+  user_name: string;
+  user_role: string;
+  user_profile_photo: string | null;
+  user_gender: string | null;
+  content: string;
+  created_at: string;
+}
+
+export interface UserSearchResult {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  profile_photo: string | null;
+  gender: string | null;
 }
 
 export interface Notification {
@@ -290,6 +318,17 @@ export interface Notification {
   created_at: string;
 }
 
+export interface SharedPostData {
+  id: number;
+  author_name: string;
+  author_profile_photo: string | null;
+  author_gender: string | null;
+  content: string;
+  image: string | null;
+  created_at: string;
+  is_active: boolean;
+}
+
 export interface Message {
   id: number;
   conversation: number;
@@ -298,6 +337,7 @@ export interface Message {
   sender_role: string;
   body: string;
   is_read: boolean;
+  shared_post_data?: SharedPostData | null;
   created_at: string;
 }
 
@@ -325,6 +365,14 @@ export interface Conversation {
   unread_count: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface ProfileTimelineItem {
+  type: "post" | "repost";
+  sort_at: string;
+  repost_id?: number;
+  repost_at?: string;
+  post: FeedPost;
 }
 
 export interface PublicProfile {

@@ -12,6 +12,10 @@ class Notification(models.Model):
         RESCHEDULE_ACCEPTED        = 'RESCHEDULE_ACCEPTED',        'Reschedule Accepted'
         RESCHEDULE_REJECTED        = 'RESCHEDULE_REJECTED',        'Reschedule Rejected'
         MESSAGE_RECEIVED           = 'MESSAGE_RECEIVED',           'Message Received'
+        POST_LIKED                 = 'POST_LIKED',                 'Post Liked'
+        POST_COMMENTED             = 'POST_COMMENTED',             'Post Commented'
+        POST_REPOSTED              = 'POST_REPOSTED',              'Post Reposted'
+        POST_SHARED_VIA_DM         = 'POST_SHARED_VIA_DM',         'Post Shared via DM'
         GENERAL                    = 'GENERAL',                    'General'
 
     recipient = models.ForeignKey(

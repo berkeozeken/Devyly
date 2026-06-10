@@ -24,7 +24,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import api from "@/lib/api";
+import { getUser } from "@/lib/auth";
 import type { Company, JobPost } from "@/types";
+import { useRouter } from "next/navigation";
 
 const WORK_TYPE_LABELS: Record<string, string> = {
   all: "Tüm Türler", REMOTE: "Uzaktan", HYBRID: "Hibrit", ONSITE: "Ofis",
@@ -34,10 +36,22 @@ const JOB_ORDERING_LABELS: Record<string, string> = {
 };
 
 function MyJobsContent() {
+  const router = useRouter();
   const [posts, setPosts] = useState<JobPost[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleNewJobClick = () => {
+    const user = getUser();
+    if (!user?.is_phone_verified) {
+      toast.error("İlan yayınlamadan önce telefon numaranızı doğrulamanız gerekir.", {
+        action: { label: "Telefonumu Doğrula", onClick: () => router.push("/settings") },
+      });
+      return;
+    }
+    setDialogOpen(true);
+  };
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -113,7 +127,7 @@ function MyJobsContent() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">My Jobs</h1>
-          <Button size="sm" onClick={() => setDialogOpen(true)}>
+          <Button size="sm" onClick={handleNewJobClick}>
             <Plus size={15} className="mr-1.5" />
             Yeni İlan
           </Button>

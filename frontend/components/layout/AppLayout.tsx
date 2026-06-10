@@ -75,6 +75,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Restore theme preference when entering app from public pages
+    const savedTheme = localStorage.getItem("theme");
+    const html = document.documentElement;
+    if (savedTheme === "dark") {
+      html.classList.add("dark");
+    } else if (savedTheme === null && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      html.classList.add("dark");
+    }
+
     const user = getUser();
     if (user) {
       setUserRole(user.role);
@@ -125,7 +134,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = () => {
     clearTokens();
-    window.location.replace("/feed");
+    window.location.replace("/");
   };
 
   return (
@@ -135,16 +144,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="mx-auto max-w-7xl h-full px-4 sm:px-6 flex items-center gap-2">
 
           {/* Logo */}
-          <Link href="/feed" className="flex items-center gap-2 shrink-0 mr-4 group">
-            <span className="font-semibold text-[17px] tracking-tight text-foreground group-hover:opacity-75 transition-opacity">
-              Devyly
-            </span>
-            <span
-              className="w-1.75 h-1.75 rounded-full shrink-0"
-              style={{
-                backgroundColor: "var(--brand)",
-                boxShadow: "0 0 6px var(--brand)",
-              }}
+          <Link href="/feed" className="flex items-center shrink-0 mr-4 group">
+            <img
+              src="/brand/devyly-logo-light-theme.png"
+              alt="Devyly"
+              className="block dark:hidden h-8 w-auto group-hover:opacity-75 transition-opacity"
+            />
+            <img
+              src="/brand/devyly-logo-dark-theme.png"
+              alt="Devyly"
+              className="hidden dark:block h-8 w-auto group-hover:opacity-75 transition-opacity"
             />
           </Link>
 

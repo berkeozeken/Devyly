@@ -44,6 +44,11 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError('Geçersiz email veya şifre.')
         if not user.is_active:
             raise serializers.ValidationError('Hesap aktif değil.')
+        if not user.is_email_verified:
+            raise serializers.ValidationError(
+                'Email adresinizi doğrulamadan giriş yapamazsınız. '
+                'Lütfen gelen kutunuzu kontrol edin.'
+            )
         data['user'] = user
         return data
 
@@ -56,7 +61,9 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'email', 'first_name', 'last_name', 'role',
             'profile_photo', 'gender',
-            'is_active', 'date_joined',
+            'is_active', 'is_email_verified',
+            'phone_number', 'is_phone_verified',
+            'date_joined',
         )
         read_only_fields = fields
 
@@ -116,6 +123,15 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if data['new_password'] != data['new_password_confirm']:
             raise serializers.ValidationError({'new_password_confirm': 'Şifreler eşleşmiyor.'})
         return data
+
+
+class EmailVerificationConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    token = serializers.CharField()
+
+
+class ResendEmailVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
 
 
 class PublicDeveloperProfileSerializer(serializers.ModelSerializer):

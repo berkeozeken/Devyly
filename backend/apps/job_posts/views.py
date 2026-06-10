@@ -101,11 +101,31 @@ class JobPostViewSet(ModelViewSet):
         qs = _filter_jobposts(qs, request.query_params)
         return Response(self.get_serializer(qs, many=True).data)
 
+    def create(self, request, *args, **kwargs):
+        if not request.user.is_phone_verified:
+            return Response(
+                {'detail': 'İlan yayınlamadan önce telefon numaranızı doğrulamanız gerekir.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().create(request, *args, **kwargs)
+
     @extend_schema(request=ApplySerializer, responses={201: JobApplicationSerializer})
     @action(detail=True, methods=['post'], url_path='apply', permission_classes=[IsAuthenticated])
     def apply(self, request, pk=None):
         if request.user.role != User.Role.DEVELOPER:
             return Response({'detail': 'Başvuru sadece Developer hesapları tarafından yapılabilir.'}, status=403)
+
+        if not request.user.is_email_verified:
+            return Response(
+                {'detail': 'Başvuru yapmadan önce email adresinizi doğrulamanız gerekir.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if not request.user.is_phone_verified:
+            return Response(
+                {'detail': 'Başvuru yapmadan önce telefon numaranızı doğrulamanız gerekir.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         job_post = self.get_object()
 

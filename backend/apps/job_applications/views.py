@@ -1,3 +1,5 @@
+import logging
+
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -12,9 +14,12 @@ _APP_ORDERING = {
     'interview_date': 'interview_date',
 }
 
+from apps.email_service.service import EmailService
 from apps.notifications.models import Notification
 from apps.notifications.services import create_notification
 from apps.users.models import User
+
+logger = logging.getLogger(__name__)
 
 from .models import InterviewRescheduleRequest, JobApplication
 from .serializers import (
@@ -119,7 +124,7 @@ class JobApplicationDetailView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        # Status change notification
+        # Status change notification + email
         if old_status != app.status:
             create_notification(
                 recipient=app.developer,
@@ -129,6 +134,10 @@ class JobApplicationDetailView(APIView):
                 message=f"{app.job_post.title} başvurunuzun durumu {app.status} olarak güncellendi.",
                 link="/my-applications",
             )
+            try:
+                EmailService.send_application_status_email(app)
+            except Exception as exc:
+                logger.warning('Application status email gönderilemedi (app=%s): %s', app.pk, exc)
 
         # Interview info notification
         interview_changed = (

@@ -1,5 +1,5 @@
-import RegisterForm from "@/components/auth/RegisterForm";
+import { redirect } from "next/navigation";
 
 export default function RecruiterRegisterPage() {
-  return <RegisterForm role="RECRUITER" />;
+  redirect("/register?role=recruiter");
 }

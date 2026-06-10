@@ -113,7 +113,7 @@ function RecruitersContent() {
               onChange={(e) => setIsHiring(e.target.checked)}
               className="h-4 w-4 rounded"
             />
-            İşe Alıyorlar
+            İşe Alım Yapıyorlar
           </label>
           {hasFilters && (
             <Button
@@ -146,7 +146,7 @@ function RecruitersContent() {
                   <span className="font-semibold text-foreground text-sm">{rec.name}</span>
                   {rec.is_hiring && (
                     <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800 px-2 py-0.5 rounded-full font-medium">
-                      İşe Alıyor
+                      İşe Alım Yapıyor
                     </span>
                   )}
                 </div>

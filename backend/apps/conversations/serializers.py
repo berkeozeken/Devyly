@@ -6,19 +6,49 @@ from .models import Conversation, Message
 class MessageSerializer(serializers.ModelSerializer):
     sender_name = serializers.SerializerMethodField()
     sender_role = serializers.SerializerMethodField()
+    shared_post_data = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
         fields = ('id', 'conversation', 'sender', 'sender_name', 'sender_role',
-                  'body', 'is_read', 'created_at')
+                  'body', 'is_read', 'shared_post_data', 'created_at')
         read_only_fields = ('id', 'conversation', 'sender', 'sender_name',
-                            'sender_role', 'is_read', 'created_at')
+                            'sender_role', 'is_read', 'shared_post_data', 'created_at')
 
     def get_sender_name(self, obj):
         return obj.sender.get_full_name()
 
     def get_sender_role(self, obj):
         return obj.sender.role
+
+    def get_shared_post_data(self, obj):
+        if not obj.shared_post_id:
+            return None
+        post = obj.shared_post
+        if not post:
+            return None
+        photo = None
+        if post.author.profile_photo:
+            try:
+                photo = post.author.profile_photo.url
+            except Exception:
+                pass
+        image = None
+        if post.image:
+            try:
+                image = post.image.url
+            except Exception:
+                pass
+        return {
+            'id': post.id,
+            'author_name': post.author.get_full_name() or post.author.email,
+            'author_profile_photo': photo,
+            'author_gender': getattr(post.author, 'gender', None),
+            'content': post.content[:150] if post.content else '',
+            'image': image,
+            'created_at': post.created_at.isoformat(),
+            'is_active': post.is_active,
+        }
 
 
 class ConversationSerializer(serializers.ModelSerializer):

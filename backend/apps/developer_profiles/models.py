@@ -16,7 +16,7 @@ class DeveloperProfile(models.Model):
     portfolio_url = models.URLField(blank=True)
     location = models.CharField(max_length=150, blank=True)
     years_of_experience = models.PositiveIntegerField(null=True, blank=True)
-    is_open_to_work = models.BooleanField(default=True)
+    is_open_to_work = models.BooleanField(default=False)
     phone = models.CharField(max_length=30, blank=True)
     website = models.URLField(blank=True)
     languages = models.JSONField(default=list, blank=True)

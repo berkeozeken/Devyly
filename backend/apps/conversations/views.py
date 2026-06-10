@@ -142,7 +142,7 @@ class ConversationViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         conv = self.get_object()
 
         if request.method == 'GET':
-            msgs = Message.objects.filter(conversation=conv).select_related('sender')
+            msgs = Message.objects.filter(conversation=conv).select_related('sender', 'shared_post__author')
             return Response(MessageSerializer(msgs, many=True).data)
 
         body = (request.data.get('body') or '').strip()
@@ -203,3 +203,32 @@ class ConversationViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             is_read=False,
         ).exclude(sender=request.user).count()
         return Response({'unread_count': count})
+
+    # ── search-users ───────────────────────────────────────────────
+    @action(detail=False, methods=['get'], url_path='search-users')
+    def search_users(self, request):
+        from django.db.models import Q
+        q = request.query_params.get('q', '').strip()
+        users = User.objects.filter(is_active=True).exclude(id=request.user.id)
+        if q:
+            users = users.filter(
+                Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(email__icontains=q)
+            )
+        users = users[:20]
+        result = []
+        for u in users:
+            photo = None
+            if u.profile_photo:
+                try:
+                    photo = request.build_absolute_uri(u.profile_photo.url)
+                except Exception:
+                    pass
+            result.append({
+                'id': u.id,
+                'name': u.get_full_name() or u.email,
+                'email': u.email,
+                'role': u.role,
+                'profile_photo': photo,
+                'gender': u.gender,
+            })
+        return Response(result)

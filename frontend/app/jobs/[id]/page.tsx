@@ -2,7 +2,7 @@
 
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -26,14 +26,15 @@ function Field({ label, value }: { label: string; value?: string | boolean | nul
   if (value === undefined || value === null || value === "") return null;
   return (
     <div className="space-y-1">
-      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{label}</p>
-      <p className="text-sm text-gray-800">{String(value)}</p>
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
+      <p className="text-sm text-foreground">{String(value)}</p>
     </div>
   );
 }
 
 function JobDetailContent() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
   const [post, setPost] = useState<JobPost | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,6 +73,16 @@ function JobDetailContent() {
 
   const isDeveloper = currentUser?.role === "DEVELOPER";
 
+  const handleApplyClick = () => {
+    if (!currentUser?.is_phone_verified) {
+      toast.error("Başvuru yapmadan önce telefon numaranızı doğrulamanız gerekir.", {
+        action: { label: "Telefonumu Doğrula", onClick: () => router.push("/settings") },
+      });
+      return;
+    }
+    setDialogOpen(true);
+  };
+
   const handleApply = async () => {
     setSubmitting(true);
     try {
@@ -81,10 +92,18 @@ function JobDetailContent() {
       setDialogOpen(false);
       setCoverLetter("");
     } catch (err: unknown) {
+      const httpStatus = (err as { response?: { status?: number } })?.response?.status;
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
         "Başvuru gönderilemedi.";
-      toast.error(msg);
+      if (httpStatus === 403 && msg.includes("telefon")) {
+        setDialogOpen(false);
+        toast.error(msg, {
+          action: { label: "Telefonumu Doğrula", onClick: () => router.push("/settings") },
+        });
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -97,26 +116,26 @@ function JobDetailContent() {
       <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
         <Link
           href="/jobs"
-          className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600"
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft size={14} />
           İlanlara Dön
         </Link>
 
         {loading ? (
-          <p className="text-sm text-gray-400">Yükleniyor...</p>
+          <p className="text-sm text-muted-foreground">Yükleniyor...</p>
         ) : post ? (
           <Card>
             <CardContent className="py-6 space-y-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h1 className="text-xl font-bold text-gray-800">{post.title}</h1>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <h1 className="text-xl font-bold text-foreground">{post.title}</h1>
+                  <p className="text-sm text-muted-foreground mt-1">
                     {post.company_name}
                     {post.location ? ` · ${post.location}` : ""}
                   </p>
                   {!post.is_active && (
-                    <span className="inline-block mt-2 text-xs bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full">
+                    <span className="inline-block mt-2 text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
                       Pasif İlan
                     </span>
                   )}
@@ -127,8 +146,18 @@ function JobDetailContent() {
                     <Button size="sm">Başvur</Button>
                   </Link>
                 )}
-                {isDeveloper && post.is_active && (
-                  <Button size="sm" disabled={applied} onClick={() => setDialogOpen(true)}>
+                {isDeveloper && post.is_active && !currentUser?.is_email_verified && (
+                  <div className="text-right space-y-1">
+                    <Button size="sm" disabled>Başvur</Button>
+                    <p className="text-xs text-muted-foreground">
+                      <Link href="/resend-verification" className="underline">
+                        Email doğrulaması gerekli
+                      </Link>
+                    </p>
+                  </div>
+                )}
+                {isDeveloper && post.is_active && currentUser?.is_email_verified && (
+                  <Button size="sm" disabled={applied} onClick={handleApplyClick}>
                     {applied ? "Başvuruldu" : "Başvur"}
                   </Button>
                 )}
@@ -146,15 +175,15 @@ function JobDetailContent() {
 
               {post.description && (
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Açıklama</p>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{post.description}</p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Açıklama</p>
+                  <p className="text-sm text-foreground/90 whitespace-pre-wrap">{post.description}</p>
                 </div>
               )}
 
               {post.requirements && (
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Gereksinimler</p>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{post.requirements}</p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Gereksinimler</p>
+                  <p className="text-sm text-foreground/90 whitespace-pre-wrap">{post.requirements}</p>
                 </div>
               )}
             </CardContent>

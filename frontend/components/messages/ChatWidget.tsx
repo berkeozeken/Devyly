@@ -7,7 +7,75 @@ import { Check, Eye, MessageSquare, Send, X } from "lucide-react";
 import api from "@/lib/api";
 import { getUser } from "@/lib/auth";
 import { getWsUrl } from "@/lib/ws";
-import type { Conversation, Message } from "@/types";
+import type { Conversation, Message, SharedPostData } from "@/types";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
+const MEDIA_BASE = API_URL.replace(/\/api\/?$/, "");
+
+function getMediaUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  return `${MEDIA_BASE}${path}`;
+}
+
+/* ── Shared Post Preview ─────────────────────────────────────── */
+function SharedPostPreview({ data, isMe }: { data: SharedPostData; isMe: boolean }) {
+  const g = data.author_gender?.toUpperCase();
+  const avatarCls = isMe
+    ? "bg-white/20 text-white"
+    : g === "MALE"   ? "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400"
+    : g === "FEMALE" ? "bg-pink-100 text-pink-700 dark:bg-pink-950/40 dark:text-pink-400"
+    :                  "bg-muted text-muted-foreground";
+  const imageUrl = getMediaUrl(data.image);
+
+  return (
+    <div
+      className={[
+        "mt-1.5 rounded-xl border overflow-hidden text-left",
+        isMe ? "border-white/20 bg-white/10" : "border-border bg-background dark:bg-card",
+      ].join(" ")}
+      style={{ maxWidth: 220 }}
+    >
+      <div className="p-2.5 space-y-1.5">
+        <div className="flex items-center gap-1.5">
+          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 ${avatarCls}`}>
+            {data.author_name.charAt(0).toUpperCase()}
+          </div>
+          <span className={`text-[11px] font-medium truncate ${isMe ? "text-white/90" : "text-foreground"}`}>
+            {data.author_name}
+          </span>
+        </div>
+        {data.content && (
+          <p className={`text-[11px] leading-relaxed line-clamp-3 ${isMe ? "text-white/80" : "text-muted-foreground"}`}>
+            {data.content}
+          </p>
+        )}
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt="Gönderi görseli"
+            className="w-full h-16 object-cover rounded-lg"
+          />
+        )}
+      </div>
+      <div
+        className={[
+          "px-2.5 py-1.5 border-t",
+          isMe ? "border-white/15 bg-white/5" : "border-border bg-muted/40",
+        ].join(" ")}
+      >
+        <Link
+          href="/feed"
+          className={isMe
+            ? "text-[10px] text-white/70 hover:text-white hover:underline"
+            : "text-[10px] text-brand hover:underline"}
+        >
+          Feed&apos;de görüntüle →
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 /* ── Typing Bubble ─────────────────────────────────────────────── */
 function TypingBubble() {
@@ -542,6 +610,7 @@ export default function ChatWidget() {
                   messages.map((msg, idx) => {
                     const isMe = msg.sender === currentUserId;
                     const isLast = idx === messages.length - 1;
+                    const isSharedPost = Boolean(msg.shared_post_data);
                     return (
                       <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                         <div
@@ -556,7 +625,14 @@ export default function ChatWidget() {
                               isMe ? "bg-blue-600 text-white" : "bg-muted text-foreground"
                             }`}
                           >
-                            {msg.body}
+                            {isSharedPost ? (
+                              <>
+                                <span className="text-xs opacity-80">Bir gönderi paylaştı</span>
+                                <SharedPostPreview data={msg.shared_post_data!} isMe={isMe} />
+                              </>
+                            ) : (
+                              msg.body
+                            )}
                           </div>
                           {isMe && isLast && showReadStatus && (
                             <span className="text-muted-foreground flex justify-end">

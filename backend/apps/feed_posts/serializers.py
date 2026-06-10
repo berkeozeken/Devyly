@@ -2,9 +2,38 @@ import os
 
 from rest_framework import serializers
 
-from .models import FeedPost
+from .models import FeedPost, PostComment
 
 ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png'}
+
+
+class PostCommentSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField(read_only=True)
+    user_role = serializers.SerializerMethodField(read_only=True)
+    user_profile_photo = serializers.SerializerMethodField(read_only=True)
+    user_gender = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = PostComment
+        fields = ('id', 'user', 'user_name', 'user_role', 'user_profile_photo', 'user_gender', 'content', 'created_at')
+        read_only_fields = ('id', 'user', 'user_name', 'user_role', 'user_profile_photo', 'user_gender', 'created_at')
+
+    def get_user_name(self, obj):
+        return obj.user.get_full_name() or obj.user.email
+
+    def get_user_role(self, obj):
+        return obj.user.role
+
+    def get_user_profile_photo(self, obj):
+        if not obj.user.profile_photo:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.user.profile_photo.url)
+        return obj.user.profile_photo.url
+
+    def get_user_gender(self, obj):
+        return obj.user.gender or None
 
 
 class FeedPostSerializer(serializers.ModelSerializer):
@@ -15,6 +44,11 @@ class FeedPostSerializer(serializers.ModelSerializer):
     author_profile_photo = serializers.SerializerMethodField(read_only=True)
     author_gender = serializers.SerializerMethodField(read_only=True)
     remove_image = serializers.BooleanField(write_only=True, required=False)
+    likes_count = serializers.SerializerMethodField(read_only=True)
+    is_liked_by_me = serializers.SerializerMethodField(read_only=True)
+    comments_count = serializers.SerializerMethodField(read_only=True)
+    reposts_count = serializers.SerializerMethodField(read_only=True)
+    is_reposted_by_me = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = FeedPost
@@ -30,6 +64,11 @@ class FeedPostSerializer(serializers.ModelSerializer):
             'image',
             'remove_image',
             'is_active',
+            'likes_count',
+            'is_liked_by_me',
+            'comments_count',
+            'reposts_count',
+            'is_reposted_by_me',
             'created_at',
             'updated_at',
         )
@@ -42,6 +81,11 @@ class FeedPostSerializer(serializers.ModelSerializer):
             'author_profile_photo',
             'author_gender',
             'is_active',
+            'likes_count',
+            'is_liked_by_me',
+            'comments_count',
+            'reposts_count',
+            'is_reposted_by_me',
             'created_at',
             'updated_at',
         )
@@ -60,6 +104,36 @@ class FeedPostSerializer(serializers.ModelSerializer):
 
     def get_author_gender(self, obj):
         return obj.author.gender or None
+
+    def get_likes_count(self, obj):
+        v = getattr(obj, 'likes_count', None)
+        return v if v is not None else obj.likes.count()
+
+    def get_is_liked_by_me(self, obj):
+        v = getattr(obj, 'is_liked_by_me', None)
+        if v is not None:
+            return bool(v)
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        return obj.likes.filter(user=request.user).exists()
+
+    def get_comments_count(self, obj):
+        v = getattr(obj, 'comments_count', None)
+        return v if v is not None else obj.comments.count()
+
+    def get_reposts_count(self, obj):
+        v = getattr(obj, 'reposts_count', None)
+        return v if v is not None else obj.reposts.count()
+
+    def get_is_reposted_by_me(self, obj):
+        v = getattr(obj, 'is_reposted_by_me', None)
+        if v is not None:
+            return bool(v)
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        return obj.reposts.filter(user=request.user).exists()
 
     def validate_image(self, value):
         if not value:
