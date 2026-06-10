@@ -25,7 +25,7 @@ import { getUser, setUser as storeUser, clearTokens } from "@/lib/auth";
 import api from "@/lib/api";
 import type { User, UserRole } from "@/types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api";
 const MEDIA_BASE = API_URL.replace(/\/api\/?$/, "");
 
 function getPhotoUrl(photo: string | null | undefined): string | null {
