@@ -253,7 +253,7 @@ function DeveloperProfileView({
   const skills    = (dp?.skills ?? "").split(",").map(s => s.trim()).filter(Boolean);
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-8 space-y-5">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-5">
 
       {/* Header card */}
       <div className="border border-border rounded-2xl p-6 bg-card flex items-start gap-5">
@@ -459,7 +459,7 @@ function RecruiterProfileView({
   const hasCompanyInfo = !!(rp?.company_name || rp?.company_industry || rp?.company_location || rp?.company_website);
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-8 space-y-5">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-5">
 
       {/* Header card */}
       <div className="border border-border rounded-2xl p-6 bg-card flex items-start gap-5">
@@ -661,11 +661,11 @@ export default function PublicProfilePage() {
   const body = (
     <div className="min-h-screen">
       {loading ? (
-        <div className="max-w-2xl mx-auto px-6 py-8">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
           <p className="text-sm text-muted-foreground/70">Yükleniyor...</p>
         </div>
       ) : notFound || !publicProfile ? (
-        <div className="max-w-2xl mx-auto px-6 py-8">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
           <p className="text-sm text-muted-foreground/70">Kullanıcı bulunamadı.</p>
         </div>
       ) : publicProfile.user.role === "DEVELOPER" ? (

@@ -113,7 +113,7 @@ function JobDetailContent() {
 
   const body = (
     <>
-      <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         <Link
           href="/jobs"
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"

@@ -75,7 +75,7 @@ function NotificationsContent() {
 
   return (
     <AppLayout>
-      <div className="max-w-2xl mx-auto px-6 py-8 space-y-5">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-5">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-semibold text-foreground">Bildirimler</h2>
