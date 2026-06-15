@@ -1,10 +1,12 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.admin.views.decorators import staff_member_required
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-from config.basic_auth import docs_basic_auth
+_schema_view = staff_member_required(SpectacularAPIView.as_view(), login_url='/admin/login/')
+_docs_view = staff_member_required(SpectacularSwaggerView.as_view(url_name='schema'), login_url='/admin/login/')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,8 +26,8 @@ urlpatterns = [
     path('api/feed-posts/', include('apps.feed_posts.urls')),
     path('api/notifications/', include('apps.notifications.urls')),
     path('api/conversations/', include('apps.conversations.urls')),
-    path('api/schema/', docs_basic_auth(SpectacularAPIView.as_view()), name='schema'),
-    path('api/docs/', docs_basic_auth(SpectacularSwaggerView.as_view(url_name='schema')), name='swagger-ui'),
+    path('api/schema/', _schema_view, name='schema'),
+    path('api/docs/', _docs_view, name='swagger-ui'),
 ]
 
 if settings.DEBUG:
