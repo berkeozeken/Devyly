@@ -4,6 +4,8 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from config.basic_auth import docs_basic_auth
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('apps.users.urls')),
@@ -22,8 +24,8 @@ urlpatterns = [
     path('api/feed-posts/', include('apps.feed_posts.urls')),
     path('api/notifications/', include('apps.notifications.urls')),
     path('api/conversations/', include('apps.conversations.urls')),
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/schema/', docs_basic_auth(SpectacularAPIView.as_view()), name='schema'),
+    path('api/docs/', docs_basic_auth(SpectacularSwaggerView.as_view(url_name='schema')), name='swagger-ui'),
 ]
 
 if settings.DEBUG:

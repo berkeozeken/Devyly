@@ -158,3 +158,7 @@ SERVER_EMAIL = config('SERVER_EMAIL', default='noreply@devyly.com')
 EMAIL_PROVIDER = config('EMAIL_PROVIDER', default='CONSOLE')
 
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
+
+# API Docs Basic Auth
+DOCS_BASIC_AUTH_USERNAME = config('DOCS_BASIC_AUTH_USERNAME', default='')
+DOCS_BASIC_AUTH_PASSWORD = config('DOCS_BASIC_AUTH_PASSWORD', default='')
