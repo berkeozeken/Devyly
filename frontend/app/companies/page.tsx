@@ -10,6 +10,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import api from "@/lib/api";
+import { COMPANY_VERIFICATION_EMAIL } from "@/lib/constants";
 import type { Company } from "@/types";
 
 function CompaniesContent() {
@@ -54,6 +55,17 @@ function CompaniesContent() {
             {showForm ? "İptal" : "Yeni Şirket"}
           </Button>
         </div>
+
+        {/* Verification info */}
+        {companies.length > 0 && !companies.some((c) => c.is_verified) && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+            İlan yayınlamak için doğrulanmış bir şirketiniz olmalı. Şirket doğrulaması için{" "}
+            <a href={`mailto:${COMPANY_VERIFICATION_EMAIL}`} className="underline font-medium">
+              {COMPANY_VERIFICATION_EMAIL}
+            </a>{" "}
+            adresine mail atın.
+          </div>
+        )}
 
         {/* Form */}
         {showForm && (

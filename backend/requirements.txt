@@ -1,5 +1,6 @@
 asgiref==3.11.1
 gunicorn==23.0.0
+twilio==9.4.0
 whitenoise==6.8.2
 channels>=4.0
 daphne>=4.0

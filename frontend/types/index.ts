@@ -30,6 +30,7 @@ export interface Company {
   contact_person: string;
   contact_email: string;
   notes: string;
+  is_verified: boolean;
   created_at: string;
   updated_at: string;
 }

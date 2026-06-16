@@ -21,6 +21,16 @@ class PhoneVerificationRequestView(APIView):
                 {'detail': 'Lütfen 60 saniye bekleyip tekrar deneyin.'},
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
+        if error == 'duplicate_phone':
+            return Response(
+                {'detail': 'Bu telefon numarası başka bir hesapta kullanılıyor.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if error == 'send_error':
+            return Response(
+                {'detail': 'SMS gönderilemedi. Lütfen daha sonra tekrar deneyin.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
 
         return Response({'detail': 'Doğrulama kodu gönderildi.'})
 

@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import api from "@/lib/api";
-import { getUser } from "@/lib/auth";
+import { COMPANY_VERIFICATION_EMAIL } from "@/lib/constants";
 import type { Company, JobPost } from "@/types";
 import { useRouter } from "next/navigation";
 
@@ -43,11 +43,12 @@ function MyJobsContent() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleNewJobClick = () => {
-    const user = getUser();
-    if (!user?.is_phone_verified) {
-      toast.error("İlan yayınlamadan önce telefon numaranızı doğrulamanız gerekir.", {
-        action: { label: "Telefonumu Doğrula", onClick: () => router.push("/settings") },
-      });
+    const hasVerifiedCompany = companies.some((c) => c.is_verified);
+    if (!hasVerifiedCompany) {
+      toast.error(
+        `İlan yayınlamak için doğrulanmış bir şirketiniz olmalı. Şirket doğrulaması için ${COMPANY_VERIFICATION_EMAIL} adresine mail atın.`,
+        { action: { label: "Şirketlerim", onClick: () => router.push("/companies") } },
+      );
       return;
     }
     setDialogOpen(true);

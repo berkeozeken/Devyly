@@ -1,6 +1,6 @@
 "use client";
 
-import { Globe, Mail, MapPin, Trash2, User } from "lucide-react";
+import { CheckCircle2, Clock, Globe, Mail, MapPin, Trash2, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,7 +23,20 @@ export default function CompanyList({ companies, onDelete }: Props) {
           <CardContent className="py-5 space-y-3">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="font-semibold text-foreground text-[15px]">{company.name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-foreground text-[15px]">{company.name}</p>
+                  {company.is_verified ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 size={11} />
+                      Doğrulandı
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-500 dark:text-amber-400">
+                      <Clock size={11} />
+                      Doğrulanmadı
+                    </span>
+                  )}
+                </div>
                 {company.industry && (
                   <p className="text-xs text-muted-foreground mt-0.5">{company.industry}</p>
                 )}

@@ -169,3 +169,11 @@ SERVER_EMAIL = config('SERVER_EMAIL', default='noreply@devyly.com')
 EMAIL_PROVIDER = config('EMAIL_PROVIDER', default='CONSOLE')
 
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
+
+# Twilio Verify (production SMS)
+TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
+TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
+TWILIO_VERIFY_SERVICE_SID = config('TWILIO_VERIFY_SERVICE_SID', default='')
+
+# Company verification
+COMPANY_VERIFICATION_CONTACT_EMAIL = config('COMPANY_VERIFICATION_CONTACT_EMAIL', default='contact@devyly.com')

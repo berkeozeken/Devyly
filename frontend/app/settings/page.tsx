@@ -8,6 +8,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import api from "@/lib/api";
 import { setUser as persistUser } from "@/lib/auth";
+import { PHONE_VERIFICATION_UI_ENABLED } from "@/lib/featureFlags";
 import type { User } from "@/types";
 
 // ─── Country data ─────────────────────────────────────────────────────────────
@@ -343,7 +344,7 @@ function SettingsContent() {
           </div>
         </div>
 
-        <PhoneVerificationCard />
+        {PHONE_VERIFICATION_UI_ENABLED && <PhoneVerificationCard />}
 
       </div>
     </AppLayout>

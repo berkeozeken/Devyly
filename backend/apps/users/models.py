@@ -41,7 +41,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
     has_received_welcome_email = models.BooleanField(default=False)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True, unique=True)
     is_phone_verified = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
 

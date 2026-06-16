@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import api from "@/lib/api";
 import { getUser, isAuthenticated } from "@/lib/auth";
+import { PHONE_VERIFICATION_UI_ENABLED } from "@/lib/featureFlags";
 import type { JobApplication, JobPost, User } from "@/types";
 
 function Field({ label, value }: { label: string; value?: string | boolean | null }) {
@@ -74,7 +75,7 @@ function JobDetailContent() {
   const isDeveloper = currentUser?.role === "DEVELOPER";
 
   const handleApplyClick = () => {
-    if (!currentUser?.is_phone_verified) {
+    if (PHONE_VERIFICATION_UI_ENABLED && !currentUser?.is_phone_verified) {
       toast.error("Başvuru yapmadan önce telefon numaranızı doğrulamanız gerekir.", {
         action: { label: "Telefonumu Doğrula", onClick: () => router.push("/settings") },
       });
@@ -96,7 +97,7 @@ function JobDetailContent() {
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
         "Başvuru gönderilemedi.";
-      if (httpStatus === 403 && msg.includes("telefon")) {
+      if (PHONE_VERIFICATION_UI_ENABLED && httpStatus === 403 && msg.includes("telefon")) {
         setDialogOpen(false);
         toast.error(msg, {
           action: { label: "Telefonumu Doğrula", onClick: () => router.push("/settings") },

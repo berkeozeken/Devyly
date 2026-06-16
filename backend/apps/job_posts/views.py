@@ -102,12 +102,17 @@ class JobPostViewSet(ModelViewSet):
         return Response(self.get_serializer(qs, many=True).data)
 
     def create(self, request, *args, **kwargs):
-        if not request.user.is_phone_verified:
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        company = serializer.validated_data.get('company')
+        if not company or not company.is_verified:
             return Response(
-                {'detail': 'İlan yayınlamadan önce telefon numaranızı doğrulamanız gerekir.'},
+                {'detail': 'İlan yayınlamak için doğrulanmış bir şirket seçmeniz gerekir.'},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        return super().create(request, *args, **kwargs)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     @extend_schema(request=ApplySerializer, responses={201: JobApplicationSerializer})
     @action(detail=True, methods=['post'], url_path='apply', permission_classes=[IsAuthenticated])
@@ -121,12 +126,7 @@ class JobPostViewSet(ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        if not request.user.is_phone_verified:
-            return Response(
-                {'detail': 'Başvuru yapmadan önce telefon numaranızı doğrulamanız gerekir.'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
+        # PHONE_VERIFICATION_DISABLED: phone check temporarily removed (re-enable when SMS is live)
         job_post = self.get_object()
 
         if not job_post.is_active:

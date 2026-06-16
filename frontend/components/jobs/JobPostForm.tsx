@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import api from "@/lib/api";
+import { COMPANY_VERIFICATION_EMAIL } from "@/lib/constants";
 import type { Company, JobPost } from "@/types";
 
 const schema = z.object({
@@ -40,6 +41,7 @@ interface Props {
 }
 
 export default function JobPostForm({ companies, onSuccess, onCancel }: Props) {
+  const verifiedCompanies = companies.filter((c) => c.is_verified);
   const router = useRouter();
   const {
     register,
@@ -62,9 +64,9 @@ export default function JobPostForm({ companies, onSuccess, onCancel }: Props) {
       const httpStatus = (err as { response?: { status?: number } })?.response?.status;
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || "";
-      if (httpStatus === 403 && msg.includes("telefon")) {
+      if (httpStatus === 403 && msg.includes("şirket")) {
         toast.error(msg, {
-          action: { label: "Telefonumu Doğrula", onClick: () => router.push("/settings") },
+          action: { label: "Şirketlerim", onClick: () => router.push("/companies") },
         });
       } else {
         toast.error(msg || "İlan oluşturulamadı.");
@@ -90,11 +92,17 @@ export default function JobPostForm({ companies, onSuccess, onCancel }: Props) {
                       <SelectValue placeholder="Şirket seçin" />
                     </SelectTrigger>
                     <SelectContent>
-                      {companies.map((c) => (
-                        <SelectItem key={c.id} value={String(c.id)}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
+                      {verifiedCompanies.length === 0 ? (
+                        <div className="px-3 py-2 text-xs text-muted-foreground">
+                          Doğrulanmış şirket yok. {COMPANY_VERIFICATION_EMAIL} adresine mail atın.
+                        </div>
+                      ) : (
+                        verifiedCompanies.map((c) => (
+                          <SelectItem key={c.id} value={String(c.id)}>
+                            {c.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 )}
